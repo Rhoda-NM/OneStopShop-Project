@@ -1,0 +1,101 @@
+from sqlalchemy_serializer import SerializerMixin
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm import validates
+from sqlalchemy.ext.hybrid import hybrid_property
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+from config import bcrypt
+
+db = SQLAlchemy()
+
+class User(db.Model, SerializerMixin):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String, unique=True, nullable=False)
+    email = db.Column(db.String, unique=True, nullable=False)
+    _password_hash = db.Column(db.String, nullable=False)
+    role = db.Column(db.String, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.now())
+
+    orders = db.relationship('Order', backref='user')
+    order_items = association_proxy('orders', 'order_items')
+
+    serialize_rules = ('-_password_hash', '-orders', '-created_at', '-updated_at')
+
+    @validates('username', 'email')
+    def validate_fields(self, key, value):
+        if not value:
+            raise ValueError(f'User must have a {key}')
+        return value
+
+    @hybrid_property
+    def password_hash(self):
+        return self._password_hash
+    
+    @password_hash.setter
+    def password_hash(self, password):
+        password_hash = bcrypt.generate_password_hash(
+            password.encode('utf-8'))
+        self._password_hash = password_hash.decode('utf-8')
+    
+    def authenticate(self, password):
+        return bcrypt.check_password_hash(
+            self._password_hash, password.encode('utf-8'))
+
+class Product(db.Model, SerializerMixin):
+    __tablename__ = 'products'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    category = db.Column(db.String, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    description = db.Column(db.Text)
+    stock = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.now())
+
+    order_items = db.relationship('OrderItem', backref='product')
+
+    serialize_rules = ('-order_items', '-created_at', '-updated_at')
+
+    @validates('name', 'category', 'price', 'stock')
+    def validate_fields(self, key, value):
+        if not value:
+            raise ValueError(f'Product must have a {key}')
+        return value
+
+class Order(db.Model, SerializerMixin):
+    __tablename__ = 'orders'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    total_price = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.now())
+
+    order_items = db.relationship('OrderItem', backref='order')
+    items = association_proxy('order_items', 'product')
+
+    serialize_rules = ('-order_items', '-user', 'created_at', 'updated_at')
+
+class OrderItem(db.Model, SerializerMixin):
+    __tablename__ = 'order_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
+    quantity = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.now())
+
+    serialize_rules = ('-order', '-product', '-created_at', '-updated_at')
+
+    @validates('quantity', 'price')
+    def validate_fields(self, key, value):
+        if value <= 0:
+            raise ValueError(f'{key.capitalize()} must be greater than 0')
+        return value
