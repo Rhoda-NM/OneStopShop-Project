@@ -98,3 +98,54 @@ class OrderItem(db.Model, SerializerMixin):
         if value <= 0:
             raise ValueError(f'{key.capitalize()} must be greater than 0')
         return value
+
+class ViewingHistory(db.Model, SerializerMixin):
+    __tablename__ = 'viewing_history'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
+    viewed_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='viewing_history')
+    product = db.relationship('Product', backref='viewing_history')
+
+    serialize_rules = ('-user', '-product', '-viewed_at')
+
+class SearchQuery(db.Model, SerializerMixin):
+    __tablename__ = 'search_query'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    query = db.Column(db.String(200))
+    searched_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='search_queries')
+
+    serialize_rules = ('-user', '-searched_at')
+
+class Engagement(db.Model, SerializerMixin):
+    __tablename__ = 'engagement'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
+    watch_time = db.Column(db.Integer)  
+    engaged_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='engagements')
+    product = db.relationship('Product', backref='engagements')
+
+    serialize_rules = ('-user', '-product', '-engaged_at')
+
+class Wishlist(db.Model, SerializerMixin):
+    __tablename__ = 'wishlists'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
+
+    user = db.relationship('User', backref='wishlists')
+    product = db.relationship('Product', backref='wishlists')
+
+    serialize_rules = ('-user', '-product')
