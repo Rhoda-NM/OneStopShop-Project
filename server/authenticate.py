@@ -52,9 +52,6 @@ login_args = reqparse.RequestParser()
 login_args.add_argument('email')
 login_args.add_argument('password')
 
-@authenticate_bp.route('/hello')
-def index():
-    return '<h1>Hey user </h1>'
 class Register(Resource):
 
     def post(self):
@@ -62,14 +59,10 @@ class Register(Resource):
         data = register_args.parse_args()
         email = data.get('email')
         username = data.get('username')
-        password = data.get('password')
+        password = data.get('paddword')
         if username and email and password:
-            existing_user = User.query.filter(
-                (User.username == username) | (User.email == email)
-            ).first()
-
-            if existing_user:
-                return {'error': 'User already exists'}, 400
+            if User.query.filter_by(username=username) or User.query.fliter_by(email=email):
+                return {'error': 'User already exists'}
             new_user = User(username=username, email=email)
             new_user.set_password(password)
             db.session.add(new_user)
@@ -96,7 +89,7 @@ class Login(Resource):
             # login
             token = create_access_token(identity=user.id)
             refresh_token = create_refresh_token(identity=user.id)
-            return {user.to_dict()}
+            return {"token": token, "refresh_token": refresh_token}
 
 
     @jwt_required(refresh=True)
