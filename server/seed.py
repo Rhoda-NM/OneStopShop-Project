@@ -5,6 +5,8 @@ from datetime import datetime
 from app import app
 
 with app.app_context():
+    db.drop_all()
+    print("Dropping all")
     db.create_all()
 
     # Create some users

@@ -31,7 +31,7 @@ class ProductById(Resource):
             return jsonify({"message": "Product not found"}), 404
         return product.to_dict(), 200
     
-    def patch_product(self, product_id):
+    def patch(self, product_id):
         product = Product.query.filter(product_id == product_id).first()
         data=request.get_json()
         if not product:
@@ -44,7 +44,7 @@ class ProductById(Resource):
                 return product.to_dict(), 200
             except Exception as e:
                 return jsonify({"message": str(e)}), 400
-    def delete_product(self, product_id):
+    def delete(self, product_id):
         product = Product.query.filter(Product.id == product_id).first()
         if not product:
             return jsonify({"message": "Product not found"}), 404
@@ -52,7 +52,8 @@ class ProductById(Resource):
         return product.to_dict(), 204
     
             
-api.add_resource(ProductResource,'/products',endpoint='product')
+api.add_resource(ProductResource,'/products',endpoint='products')
+api.add_resource(ProductById,'/products/<int:product_id>',endpoint='product_by_id')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
