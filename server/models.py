@@ -105,7 +105,7 @@ class ViewingHistory(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
-    viewed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    viewed_at = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('User', backref='viewing_history')
     product = db.relationship('Product', backref='viewing_history')
@@ -118,7 +118,7 @@ class SearchQuery(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     query = db.Column(db.String(200))
-    searched_at = db.Column(db.DateTime, default=datetime.utcnow)
+    searched_at = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('User', backref='search_queries')
 
@@ -131,7 +131,7 @@ class Engagement(db.Model, SerializerMixin):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     watch_time = db.Column(db.Integer)  
-    engaged_at = db.Column(db.DateTime, default=datetime.utcnow)
+    engaged_at = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('User', backref='engagements')
     product = db.relationship('Product', backref='engagements')
