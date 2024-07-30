@@ -9,9 +9,13 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from datetime import datetime, timedelta
 
 from models import Product,OrderItem,Order
+from authenticate import authenticate_bp
 
+app.register_blueprint(authenticate_bp)
 
-
+@app.route('/')
+def index():
+    return '<h1>Project Server </h1>'
 class ProductResource(Resource):
     def get(self):
         products = [product.to_dict() for product in Product.query.all()]
