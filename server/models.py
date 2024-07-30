@@ -4,8 +4,7 @@ from sqlalchemy.orm import validates
 from sqlalchemy.ext.hybrid import hybrid_property
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-
-from config import db, bcrypt
+from config import bcrypt,db
 
 
 class User(db.Model, SerializerMixin):
