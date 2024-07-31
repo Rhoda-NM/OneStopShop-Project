@@ -4,14 +4,13 @@ from flask_jwt_extended import JWTManager, create_access_token, create_refresh_t
 from functools import wraps
 
 # Local imports
-from config import db, app
+from config import db, app, jwt
 # Add your model imports
 from models import User
 
 authenticate_bp = Blueprint('authenticate_bp',__name__, url_prefix='/user')
 auth_api = Api(authenticate_bp)
 
-jwt = JWTManager()
 auth_api = Api(authenticate_bp)
 
 def init_jwt(app):
@@ -63,6 +62,7 @@ class Register(Resource):
         email = data.get('email')
         username = data.get('username')
         password = data.get('password')
+        role= "user"
         if username and email and password:
             existing_user = User.query.filter(
                 (User.username == username) | (User.email == email)
@@ -70,7 +70,7 @@ class Register(Resource):
 
             if existing_user:
                 return {'error': 'User already exists'}, 400
-            new_user = User(username=username, email=email)
+            new_user = User(username=username, email=email, role=role)
             new_user.set_password(password)
             db.session.add(new_user)
             db.session.commit()
@@ -78,7 +78,7 @@ class Register(Resource):
             session['user_id'] = new_user.id
             access_token = create_access_token(identity = new_user.id)
 
-            return {'User': new_user.to_dict(), 'access_token': access_token}
+            return {'access_token': access_token}
 
 
         return {'error': '422 Unprocessable Entity'}, 422
@@ -94,9 +94,9 @@ class Login(Resource):
         if user and user.authenticate(password):
             session['user_id'] =user.id
             # login
-            token = create_access_token(identity=user.id)
+            access_token = create_access_token(identity=user.id)
             refresh_token = create_refresh_token(identity=user.id)
-            return {user.to_dict()}
+            return {'user': user.to_dict(), "access_token": access_token}, 200
 
 
     @jwt_required(refresh=True)
