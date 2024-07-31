@@ -1,68 +1,97 @@
 from datetime import datetime
 from app import app
+import bcrypt
+from sqlalchemy.exc import IntegrityError
 from models import db, User, Product, Order, OrderItem, ViewingHistory, SearchQuery, Engagement, Wishlist
 
-with app.app_context():
-    db.drop_all()
-    # Create all tables
-    db.create_all()
+# Function to seed the database
+def seed_db():
+    # Ensure the tables are created
+    with app.app_context():
+        db.create_all()
+        
+        # Create sample users
+        users = [
+            {'username': 'john_doe', 'email': 'john@example.com', 'password': 'password', 'role': 'customer'},
+            {'username': 'jane_smith', 'email': 'jane@example.com', 'password': 'password', 'role': 'customer'},
+            {'username': 'admin', 'email': 'admin@example.com', 'password': 'adminpassword', 'role': 'admin'},
+        ]
+        
+        # Add users to the session
+        for user_data in users:
+            try:
+                user = User(
+                    username=user_data['username'],
+                    email=user_data['email'],
+                    password_hash=user_data['password'],
+                    role=user_data['role']
+                )
+                db.session.add(user)
+            except IntegrityError:
+                # Handle the case where the user already exists
+                db.session.rollback()
+        
+        # Create sample products
+        products = [
+            # Electronics
+            Product(name='Laptop', category='Electronics', image_url='http://example.com/laptop.jpg', price=999.99, description='High performance laptop', stock=50),
+            Product(name='Smart TV', category='Electronics', image_url='http://example.com/smart_tv.jpg', price=599.99, description='55 inch 4K Smart TV', stock=30),
+            Product(name='Bluetooth Speaker', category='Electronics', image_url='http://example.com/bluetooth_speaker.jpg', price=49.99, description='Portable Bluetooth speaker', stock=100),
+            
+            # Mobiles
+            Product(name='Smartphone A', category='Mobiles', image_url='http://example.com/smartphone_a.jpg', price=699.99, description='Latest model smartphone', stock=200),
+            Product(name='Smartphone B', category='Mobiles', image_url='http://example.com/smartphone_b.jpg', price=399.99, description='Affordable smartphone with great features', stock=150),
+            
+            # Clothes
+            Product(name='Men\'s T-Shirt', category='Clothes', image_url='http://example.com/mens_tshirt.jpg', price=19.99, description='Cotton t-shirt', stock=300),
+            Product(name='Women\'s Dress', category='Clothes', image_url='http://example.com/womens_dress.jpg', price=49.99, description='Stylish summer dress', stock=200),
+            Product(name='Men\'s Jeans', category='Clothes', image_url='http://example.com/mens_jeans.jpg', price=39.99, description='Comfortable jeans', stock=150),
+            
+            # Books
+            Product(name='Book A', category='Books', image_url='http://example.com/book_a.jpg', price=14.99, description='Bestselling novel', stock=500),
+            Product(name='Book B', category='Books', image_url='http://example.com/book_b.jpg', price=9.99, description='Inspirational self-help book', stock=400),
+        ]
+        
+        # Add products to the session
+        for product in products:
+            db.session.add(product)
 
-    # Add users
-    user1 = User(username='johndoe', email='johndoe@example.com', password_hash='password123', role='customer')
-    user2 = User(username='janedoe', email='janedoe@example.com', password_hash='password123', role='admin')
+        # Commit the changes to the database
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
 
-    db.session.add_all([user1, user2])
-    db.session.commit()
+        # Create sample orders
+        orders = [
+            Order(user_id=1, total_price=59.97, status='completed'),
+            Order(user_id=2, total_price=29.99, status='pending'),
+        ]
+        
+        # Add orders to the session
+        for order in orders:
+            db.session.add(order)
+        
+        # Create sample order items
+        order_items = [
+            OrderItem(order_id=1, product_id=1, quantity=1, price=999.99),
+            OrderItem(order_id=1, product_id=2, quantity=1, price=599.99),
+            OrderItem(order_id=1, product_id=3, quantity=1, price=49.99),
+            OrderItem(order_id=2, product_id=4, quantity=1, price=699.99),
+            OrderItem(order_id=2, product_id=5, quantity=1, price=399.99),
+        ]
+        
+        # Add order items to the session
+        for order_item in order_items:
+            db.session.add(order_item)
 
-    # Add products
-    product1 = Product(name='Laptop', category='Electronics', price=999.99, description='High performance laptop', stock=10)
-    product2 = Product(name='Headphones', category='Electronics', price=199.99, description='Noise cancelling headphones', stock=50)
-    product3 = Product(name='Coffee Mug', category='Home & Kitchen', price=12.99, description='Ceramic coffee mug', stock=100)
+        # Commit the changes to the database
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
 
-    db.session.add_all([product1, product2, product3])
-    db.session.commit()
-
-    # Add orders
-    order1 = Order(user_id=user1.id, total_price=1199.98, status='completed')
-    order2 = Order(user_id=user2.id, total_price=12.99, status='pending')
-
-    db.session.add_all([order1, order2])
-    db.session.commit()
-
-    # Add order items
-    order_item1 = OrderItem(order_id=order1.id, product_id=product1.id, quantity=1, price=999.99)
-    order_item2 = OrderItem(order_id=order1.id, product_id=product2.id, quantity=1, price=199.99)
-    order_item3 = OrderItem(order_id=order2.id, product_id=product3.id, quantity=1, price=12.99)
-
-    db.session.add_all([order_item1, order_item2, order_item3])
-    db.session.commit()
-
-    # Add viewing history
-    view_history1 = ViewingHistory(user_id=user1.id, product_id=product1.id, viewed_at=datetime.now())
-    view_history2 = ViewingHistory(user_id=user2.id, product_id=product2.id, viewed_at=datetime.now())
-
-    db.session.add_all([view_history1, view_history2])
-    db.session.commit()
-
-    # Add search queries
-    search_query1 = SearchQuery(user_id=user1.id, query='best laptops 2024', searched_at=datetime.now())
-    search_query2 = SearchQuery(user_id=user2.id, query='noise cancelling headphones', searched_at=datetime.now())
-
-    db.session.add_all([search_query1, search_query2])
-    db.session.commit()
-
-    # Add engagements
-    engagement1 = Engagement(user_id=user1.id, product_id=product1.id, watch_time=300, engaged_at=datetime.now())
-    engagement2 = Engagement(user_id=user2.id, product_id=product2.id, watch_time=150, engaged_at=datetime.datetime.now())
-
-    db.session.add_all([engagement1, engagement2])
-    db.session.commit()
-
-    # Add wishlist items
-    wishlist1 = Wishlist(user_id=user1.id, product_id=product3.id)
-    wishlist2 = Wishlist(user_id=user2.id, product_id=product1.id)
-
-    db.session.add_all([wishlist1, wishlist2])
-    db.session.commit()
-
-    print("Sample data added successfully!")
+# Run the seed function within the app context
+if __name__ == '__main__':
+    with app.app_context():
+        seed_db()

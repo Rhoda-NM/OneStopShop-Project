@@ -4,14 +4,23 @@ from flask_migrate import Migrate
 from flask import Flask, make_response,jsonify,session,request, current_app
 from flask_restful import Resource, Api
 from functools import wraps
-import bcrypt
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
 from datetime import datetime, timedelta
 
 from models import Product,OrderItem,Order,Wishlist,ViewingHistory,SearchQuery,Engagement
+from authenticate import authenticate_bp
 
+app.register_blueprint(authenticate_bp)
+from authenticate import authenticate_bp
 
+app.register_blueprint(authenticate_bp)
+@app.route('/')
+def index():
+    return '<h1>Project Server </h1>'
 
+@app.route('/')
+def index():
+    return '<h1>Project Server </h1>'
 class ProductResource(Resource):
     def get(self):
         products = [product.to_dict() for product in Product.query.all()]
