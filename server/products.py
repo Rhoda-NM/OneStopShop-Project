@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 
 # Add your model imports
-from models import Product, Wishlist, ViewingHistory, SearchQuery, Engagement
+from models import Product, Wishlist, ViewingHistory, SearchQuery, Engagement, ViewingHistory, SearchQuery, Engagement, Wishlist
 from authenticate import allow
 
 product_bp = Blueprint('product_bp',__name__, url_prefix='/api')

@@ -1,6 +1,5 @@
 from datetime import datetime
 from app import app
-import bcrypt
 from sqlalchemy.exc import IntegrityError
 from models import db, User, Product, Order, OrderItem
 
@@ -21,16 +20,14 @@ def seed_db():
         # Add users to the session
         for user_data in users:
             try:
-                hashed_password = bcrypt.hashpw(user_data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
                 user = User(
                     username=user_data['username'],
                     email=user_data['email'],
-                    password_hash=hashed_password,
                     role=user_data['role']
                 )
+                user.set_password(user_data['password'])  # Use the set_password method
                 db.session.add(user)
             except IntegrityError:
-                # Handle the case where the user already exists
                 db.session.rollback()
 
         # Create sample products
