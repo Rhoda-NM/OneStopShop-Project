@@ -7,7 +7,7 @@ from functools import wraps
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, verify_jwt_in_request
 from datetime import datetime, timedelta
 
-from models import Product,OrderItem,Order,Wishlist,ViewingHistory,SearchQuery,Engagement
+from models import Product,OrderItem,Order
 from authenticate import authenticate_bp
 
 app.register_blueprint(authenticate_bp)
