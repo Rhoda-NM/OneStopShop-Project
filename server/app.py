@@ -11,12 +11,16 @@ from models import Product,OrderItem,Order
 from authenticate import authenticate_bp
 
 app.register_blueprint(authenticate_bp)
+from authenticate import authenticate_bp
 
+app.register_blueprint(authenticate_bp)
 @app.route('/')
 def index():
     return '<h1>Project Server </h1>'
 
-
+@app.route('/')
+def index():
+    return '<h1>Project Server </h1>'
 class ProductResource(Resource):
     def get(self):
         products = [product.to_dict() for product in Product.query.all()]
