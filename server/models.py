@@ -21,6 +21,7 @@ class User(db.Model, SerializerMixin):
     orders = db.relationship('Order', backref='user')
     order_items = association_proxy('orders', 'order_items')
     products = db.relationship('Product', back_populates='seller')
+    wishlist = db.relationship('Wishlist', back_populates='user')
 
     serialize_rules = ('-_password_hash', '-orders', '-created_at', '-updated_at')
 
@@ -52,6 +53,7 @@ class Product(db.Model, SerializerMixin):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     seller = db.relationship('User', back_populates='products')
+    wishlist = db.relationship('Wishlist', back_populates='product')
 
     order_items = db.relationship('OrderItem', backref='product')
 
