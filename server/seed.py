@@ -1,15 +1,14 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from models import db, User, Product, Order, OrderItem
 from datetime import datetime
 from app import app
 import bcrypt
 from sqlalchemy.exc import IntegrityError
+from models import db, User, Product, Order, OrderItem, ViewingHistory, SearchQuery, Engagement, Wishlist
 
 # Function to seed the database
 def seed_db():
     # Ensure the tables are created
     with app.app_context():
+        db.drop_all()
         db.create_all()
         
         # Create sample users
@@ -25,9 +24,9 @@ def seed_db():
                 user = User(
                     username=user_data['username'],
                     email=user_data['email'],
-                    password_hash=user_data['password'],
                     role=user_data['role']
                 )
+                user.set_password(user_data['password'])
                 db.session.add(user)
             except IntegrityError:
                 # Handle the case where the user already exists
