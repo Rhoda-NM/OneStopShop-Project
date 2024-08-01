@@ -45,6 +45,9 @@ def add_to_cart():
     
     return jsonify(order.serialize()), 201
 
+#view cart
+@order_bp.route('/viewcart', methods='GET')
+#proceed to checkout
 @order_bp.route('/checkout', methods=['POST'])
 @jwt_required()
 def checkout():
@@ -79,7 +82,7 @@ def complete_order(order_id):
 @jwt_required()
 def get_orders():
     current_user_id = get_jwt_identity()
-    orders = Order.query.filter_by(user_id=current_user_id, status='cart').all()
+    orders = Order.query.filter_by(user_id=current_user_id, status='completed').all()
     return jsonify([order.serialize() for order in orders])
 
 
