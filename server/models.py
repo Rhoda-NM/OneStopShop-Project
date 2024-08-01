@@ -70,7 +70,7 @@ class Product(db.Model, SerializerMixin):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     seller = db.relationship('User', back_populates='products')
-   
+
     order_items = db.relationship('OrderItem', backref='product')
 
     serialize_rules = ('-order_items', '-created_at', '-updated_at','-seller')
