@@ -4,7 +4,7 @@ from sqlalchemy.orm import validates
 from sqlalchemy.ext.hybrid import hybrid_property
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from config import bcrypt,db
+from config import bcrypt, db
 
 
 class User(db.Model, SerializerMixin):
@@ -20,6 +20,8 @@ class User(db.Model, SerializerMixin):
 
     orders = db.relationship('Order', backref='user')
     order_items = association_proxy('orders', 'order_items')
+    products = db.relationship('Product', back_populates='seller')
+    wishlist = db.relationship('Wishlist', back_populates='user')
 
     serialize_rules = ('-_password_hash', '-orders', '-created_at', '-updated_at')
 
@@ -33,8 +35,8 @@ class User(db.Model, SerializerMixin):
         self._password_hash = bcrypt.generate_password_hash(password).decode('utf8')
     
     def authenticate(self, password):
-        return bcrypt.check_password_hash(
-            self._password_hash, password)
+        return bcrypt.check_password_hash(self._password_hash, password)
+
 
 class Product(db.Model, SerializerMixin):
     __tablename__ = 'products'
@@ -49,7 +51,12 @@ class Product(db.Model, SerializerMixin):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    seller = db.relationship('User', back_populates='products')
+    wishlist = db.relationship('Wishlist', back_populates='product')
+
     order_items = db.relationship('OrderItem', backref='product')
+    wishlists = db.relationship('Wishlist', backref='product')
 
     serialize_rules = ('-order_items', '-created_at', '-updated_at')
 
@@ -58,6 +65,7 @@ class Product(db.Model, SerializerMixin):
         if not value:
             raise ValueError(f'Product must have a {key}')
         return value
+
 
 class Order(db.Model, SerializerMixin):
     __tablename__ = 'orders'
@@ -73,6 +81,7 @@ class Order(db.Model, SerializerMixin):
     items = association_proxy('order_items', 'product')
 
     serialize_rules = ('-order_items', '-user', 'created_at', 'updated_at')
+
 
 class OrderItem(db.Model, SerializerMixin):
     __tablename__ = 'order_items'
@@ -93,6 +102,7 @@ class OrderItem(db.Model, SerializerMixin):
             raise ValueError(f'{key.capitalize()} must be greater than 0')
         return value
 
+
 class ViewingHistory(db.Model, SerializerMixin):
     __tablename__ = 'viewing_history'
 
@@ -106,6 +116,7 @@ class ViewingHistory(db.Model, SerializerMixin):
 
     serialize_rules = ('-user', '-product', '-viewed_at')
 
+
 class SearchQuery(db.Model, SerializerMixin):
     __tablename__ = 'search_query'
 
@@ -118,19 +129,21 @@ class SearchQuery(db.Model, SerializerMixin):
 
     serialize_rules = ('-user', '-searched_at')
 
+
 class Engagement(db.Model, SerializerMixin):
     __tablename__ = 'engagement'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
-    watch_time = db.Column(db.Integer)  
+    watch_time = db.Column(db.Integer)
     engaged_at = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('User', backref='engagements')
     product = db.relationship('Product', backref='engagements')
 
     serialize_rules = ('-user', '-product', '-engaged_at')
+
 
 class Wishlist(db.Model, SerializerMixin):
     __tablename__ = 'wishlists'
@@ -139,7 +152,7 @@ class Wishlist(db.Model, SerializerMixin):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
 
-    user = db.relationship('User', backref='wishlists')
+    user = db.relationship('User', back_populates='wishlists')
     product = db.relationship('Product', backref='wishlists')
 
     serialize_rules = ('-user', '-product')
