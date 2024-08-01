@@ -25,7 +25,8 @@ class WishlistTestCase(unittest.TestCase):
 
         # Create test data
         with self.app.app_context():
-            self.user = User(username='testuser', password='testpassword')
+            self.user = User(username='testuser', email='test@example.com', role='user')
+            self.user.set_password('testpassword')
             db.session.add(self.user)
             db.session.commit()
 
