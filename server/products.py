@@ -2,8 +2,6 @@ from flask import Flask, make_response,jsonify,session,request, current_app, Blu
 from flask_restful import Resource, Api, reqparse
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from config import api, jwt, db, app
-from datetime import datetime, timedelta
-from functools import wraps
 
 # Add your model imports
 from models import Product, Wishlist, ViewingHistory, SearchQuery, Engagement, ViewingHistory, SearchQuery, Engagement, Wishlist

@@ -11,8 +11,6 @@ from models import User
 authenticate_bp = Blueprint('authenticate_bp',__name__, url_prefix='/user')
 auth_api = Api(authenticate_bp)
 
-auth_api = Api(authenticate_bp)
-
 def init_jwt(app):
     jwt.init_app(app) 
 
@@ -104,7 +102,34 @@ class Login(Resource):
         token = create_access_token(identity= current_user.id )
         return {"token":token}
 
+@authenticate_bp.route('/update_user/<int:id>', methods=['PUT'])
+@jwt_required()
+def update_user():
+    current_user_id = get_jwt_identity()
+    data = request.get_json()
+    email = data.get('email')
+    username = data.get('username')
 
+    user = User.query.get(current_user_id)
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    if email:
+        user.email = email
+    if username:
+        user.username = username
+
+    db.session.commit()
+
+    return jsonify({"msg": "User updated successfully", "user": user.to_dict()}), 200
+
+@authenticate_bp.route('/delete/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_user(id):
+    user = User.query.get_or_404(id)
+    db.session.delete(user)
+    db.session.commit()
+    return '', 204
 
 # routes
 auth_api.add_resource(Register, '/register')

@@ -7,9 +7,11 @@ from functools import wraps
 
 from authenticate import authenticate_bp
 from products import product_bp
+from orders import order_bp
 
 app.register_blueprint(authenticate_bp)
 app.register_blueprint(product_bp)
+app.register_blueprint(order_bp)
 
 @app.route('/')
 def index():
