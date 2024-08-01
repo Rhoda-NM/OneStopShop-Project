@@ -94,7 +94,7 @@ class Login(Resource):
             # login
             access_token = create_access_token(identity=user.id)
             refresh_token = create_refresh_token(identity=user.id)
-            return {'user': user.to_dict(), "access_token": access_token}, 200
+            return {'user': user.serialize(), "access_token": access_token}, 200
 
 
     @jwt_required(refresh=True)

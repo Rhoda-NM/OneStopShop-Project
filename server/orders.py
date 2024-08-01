@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from config import api, jwt, db, app
 
 # Add your model imports
-from models import Product, Wishlist, Order, OrderItem
+from models import Product, Order, OrderItem
 from authenticate import allow
 
 order_bp = Blueprint('order_bp',__name__, url_prefix='/api')
@@ -45,62 +45,6 @@ def add_to_cart():
     
     return jsonify(order.serialize()), 201
 
-#view cart
-@order_bp.route('/cart', methods='GET')
-@jwt_required()
-def view_cart():
-    user_id = get_jwt_identity()
-    order = Order.query.filter_by(user_id=user_id, status='cart').first()
-    if not order:
-        return jsonify({'message': 'No items in the cart'}), 200
-    return jsonify(order.serialize()), 200
-
-#edit cart
-@order_bp.route('/cart', methods=['PUT'])
-@jwt_required()
-def edit_cart():
-    data = request.get_json()
-    user_id = get_jwt_identity()
-    order = Order.query.filter_by(user_id=user_id, status='cart').first()
-    if not order:
-        return jsonify({'error': 'No active cart found'}), 400
-    
-    for item_data in data['order_items']:
-        order_item = OrderItem.query.filter_by(order_id=order.id, product_id=item_data['product_id']).first()
-        if order_item:
-            order.total_price -= order_item.price * order_item.quantity  # Adjust the total price
-            order_item.quantity = item_data['quantity']
-            order.total_price += order_item.price * order_item.quantity  # Recalculate the total price
-    
-    db.session.commit()
-    return jsonify(order.serialize()), 200
-
-#remove items from cart
-@order_bp.route('/cart/<int:product_id>', methods=['DELETE'])
-@jwt_required()
-def remove_from_cart(product_id):
-    user_id = get_jwt_identity()
-    order = Order.query.filter_by(user_id=user_id, status='cart').first()
-    if not order:
-        return jsonify({'error': 'No active cart found'}), 400
-
-    order_item = OrderItem.query.filter_by(order_id=order.id, product_id=product_id).first()
-    if not order_item:
-        return jsonify({'error': 'Item not found in cart'}), 404
-
-    order.total_price -= order_item.price * order_item.quantity  # Adjust the total price
-    db.session.delete(order_item)
-    db.session.commit()
-
-    # Check if the cart is empty
-    if not order.order_items:
-        db.session.delete(order)
-        db.session.commit()
-        return jsonify({'message': 'Cart is now empty'}), 200
-    
-    return jsonify(order.serialize()), 200
-
-#proceed to checkout
 @order_bp.route('/checkout', methods=['POST'])
 @jwt_required()
 def checkout():
@@ -115,7 +59,6 @@ def checkout():
     
     return jsonify(order.serialize()), 200
 
-#complete order
 @order_bp.route('/complete_order/<int:order_id>', methods=['POST'])
 @jwt_required()
 def complete_order(order_id):
@@ -136,7 +79,7 @@ def complete_order(order_id):
 @jwt_required()
 def get_orders():
     current_user_id = get_jwt_identity()
-    orders = Order.query.filter_by(user_id=current_user_id, status='completed').all()
+    orders = Order.query.filter_by(user_id=current_user_id, status='cart').all()
     return jsonify([order.serialize() for order in orders])
 
 

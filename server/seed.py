@@ -9,6 +9,7 @@ def seed_db():
     with app.app_context():
         db.drop_all()
         db.create_all()
+        print("seeding database")
 
         # Create sample users
         users = [
@@ -27,39 +28,40 @@ def seed_db():
                 )
                 user.set_password(user_data['password'])  # Use the set_password method
                 db.session.add(user)
-            except IntegrityError:
+                db.session.commit()
+            except IntegrityError as e:
                 db.session.rollback()
+                print(f"Error adding user {user_data['username']}: {e}")
 
         # Create sample products
         products = [
             # Electronics
-            Product(name='Laptop', category='Electronics', image_url='http://example.com/laptop.jpg', price=999.99, description='High performance laptop', stock=50),
-            Product(name='Smart TV', category='Electronics', image_url='http://example.com/smart_tv.jpg', price=599.99, description='55 inch 4K Smart TV', stock=30),
-            Product(name='Bluetooth Speaker', category='Electronics', image_url='http://example.com/bluetooth_speaker.jpg', price=49.99, description='Portable Bluetooth speaker', stock=100),
+            Product(name='Laptop', user_id='3', category='Electronics', image_url='http://example.com/laptop.jpg', price=999.99, description='High performance laptop', stock=50),
+            Product(name='Smart TV', user_id='3', category='Electronics', image_url='http://example.com/smart_tv.jpg', price=599.99, description='55 inch 4K Smart TV', stock=30),
+            Product(name='Bluetooth Speaker', user_id='3', category='Electronics', image_url='http://example.com/bluetooth_speaker.jpg', price=49.99, description='Portable Bluetooth speaker', stock=100),
 
             # Mobiles
-            Product(name='Smartphone A', category='Mobiles', image_url='http://example.com/smartphone_a.jpg', price=699.99, description='Latest model smartphone', stock=200),
-            Product(name='Smartphone B', category='Mobiles', image_url='http://example.com/smartphone_b.jpg', price=399.99, description='Affordable smartphone with great features', stock=150),
+            Product(name='Smartphone A', user_id='3', category='Mobiles', image_url='http://example.com/smartphone_a.jpg', price=699.99, description='Latest model smartphone', stock=200),
+            Product(name='Smartphone B', user_id='3', category='Mobiles', image_url='http://example.com/smartphone_b.jpg', price=399.99, description='Affordable smartphone with great features', stock=150),
 
             # Clothes
-            Product(name='Men\'s T-Shirt', category='Clothes', image_url='http://example.com/mens_tshirt.jpg', price=19.99, description='Cotton t-shirt', stock=300),
-            Product(name='Women\'s Dress', category='Clothes', image_url='http://example.com/womens_dress.jpg', price=49.99, description='Stylish summer dress', stock=200),
-            Product(name='Men\'s Jeans', category='Clothes', image_url='http://example.com/mens_jeans.jpg', price=39.99, description='Comfortable jeans', stock=150),
+            Product(name='Men\'s T-Shirt', user_id='3', category='Clothes', image_url='http://example.com/mens_tshirt.jpg', price=19.99, description='Cotton t-shirt', stock=300),
+            Product(name='Women\'s Dress', user_id='3', category='Clothes', image_url='http://example.com/womens_dress.jpg', price=49.99, description='Stylish summer dress', stock=200),
+            Product(name='Men\'s Jeans', user_id='3', category='Clothes', image_url='http://example.com/mens_jeans.jpg', price=39.99, description='Comfortable jeans', stock=150),
 
             # Books
-            Product(name='Book A', category='Books', image_url='http://example.com/book_a.jpg', price=14.99, description='Bestselling novel', stock=500),
-            Product(name='Book B', category='Books', image_url='http://example.com/book_b.jpg', price=9.99, description='Inspirational self-help book', stock=400),
+            Product(name='Book A', user_id='3', category='Books', image_url='http://example.com/book_a.jpg', price=14.99, description='Bestselling novel', stock=500),
+            Product(name='Book B', user_id='3', category='Books', image_url='http://example.com/book_b.jpg', price=9.99, description='Inspirational self-help book', stock=400),
         ]
 
         # Add products to the session
         for product in products:
-            db.session.add(product)
-
-        # Commit the changes to the database
-        try:
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
+            try:
+                db.session.add(product)
+                db.session.commit()
+            except IntegrityError as e:
+                db.session.rollback()
+                print(f"Error adding product {product.name}: {e}")
 
         # Create sample orders
         orders = [
@@ -69,7 +71,12 @@ def seed_db():
 
         # Add orders to the session
         for order in orders:
-            db.session.add(order)
+            try:
+                db.session.add(order)
+                db.session.commit()
+            except IntegrityError as e:
+                db.session.rollback()
+                print(f"Error adding order for user {order.user_id}: {e}")
 
         # Create sample order items
         order_items = [
@@ -82,15 +89,14 @@ def seed_db():
 
         # Add order items to the session
         for order_item in order_items:
-            db.session.add(order_item)
+            try:
+                db.session.add(order_item)
+                db.session.commit()
+            except IntegrityError as e:
+                db.session.rollback()
+                print(f"Error adding order item for order {order_item.order_id}: {e}")
 
-        # Commit the changes to the database
-        try:
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-            
-            
+        print("finished seeding")
 
 # Run the seed function within the app context
 if __name__ == '__main__':
