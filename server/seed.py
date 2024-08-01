@@ -92,6 +92,8 @@ def seed_db():
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
+            
+            
 
 # Run the seed function within the app context
 if __name__ == '__main__':
