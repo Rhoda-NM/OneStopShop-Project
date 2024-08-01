@@ -1,11 +1,18 @@
 from sqlalchemy_serializer import SerializerMixin
+from sqlalchemy import Column, Integer, String, ForeignKey, Table
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import validates
+from sqlalchemy.orm import validates, relationship,backref
 from sqlalchemy.ext.hybrid import hybrid_property
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from config import bcrypt, db
 
+# Association table for many-to-many relationship between users and products
+
+wishlist_table = db.Table('wishlist_table',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True)
+)
 
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
@@ -21,7 +28,8 @@ class User(db.Model, SerializerMixin):
     orders = db.relationship('Order', backref='user')
     order_items = association_proxy('orders', 'order_items')
     products = db.relationship('Product', back_populates='seller')
-    wishlist = db.relationship('Wishlist', back_populates='user')
+   
+    wishlists = relationship('Product', secondary=wishlist_table, backref=backref('wishlisted_by_users', lazy='dynamic'))
 
     serialize_rules = ('-_password_hash', '-orders', '-created_at', '-updated_at')
 
@@ -36,6 +44,15 @@ class User(db.Model, SerializerMixin):
     
     def authenticate(self, password):
         return bcrypt.check_password_hash(self._password_hash, password)
+    
+    def serialize(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'role': self.role,
+            #'wishlists': [wishlist.serialize() for wishlist in self.wishlists]
+        }
 
 
 class Product(db.Model, SerializerMixin):
@@ -53,18 +70,26 @@ class Product(db.Model, SerializerMixin):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     seller = db.relationship('User', back_populates='products')
-    wishlist = db.relationship('Wishlist', back_populates='product')
-
+   
     order_items = db.relationship('OrderItem', backref='product')
-    wishlists = db.relationship('Wishlist', backref='product')
 
-    serialize_rules = ('-order_items', '-created_at', '-updated_at')
+    serialize_rules = ('-order_items', '-created_at', '-updated_at','-seller')
 
     @validates('name', 'category', 'price', 'stock')
     def validate_fields(self, key, value):
         if not value:
             raise ValueError(f'Product must have a {key}')
         return value
+    
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'category': self.category,
+            'price': self.price,
+            'image_url': self.image_url,
+            'description': self.description
+        }
 
 
 class Order(db.Model, SerializerMixin):
@@ -144,15 +169,3 @@ class Engagement(db.Model, SerializerMixin):
 
     serialize_rules = ('-user', '-product', '-engaged_at')
 
-
-class Wishlist(db.Model, SerializerMixin):
-    __tablename__ = 'wishlists'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
-
-    user = db.relationship('User', back_populates='wishlists')
-    product = db.relationship('Product', backref='wishlists')
-
-    serialize_rules = ('-user', '-product')

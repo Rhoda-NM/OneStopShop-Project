@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from config import api, jwt, db, app
 
 # Add your model imports
-from models import Product, Wishlist, Order, OrderItem
+from models import Product, Order, OrderItem
 from authenticate import allow
 
 order_bp = Blueprint('order_bp',__name__, url_prefix='/api')

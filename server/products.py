@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from config import api, jwt, db, app
 
 # Add your model imports
-from models import Product, Wishlist, ViewingHistory, SearchQuery, Engagement, ViewingHistory, SearchQuery, Engagement, Wishlist
+from models import Product, ViewingHistory, SearchQuery, Engagement, ViewingHistory, SearchQuery, Engagement
 from authenticate import allow
 
 product_bp = Blueprint('product_bp',__name__, url_prefix='/api')
@@ -64,7 +64,7 @@ class ProductById(Resource):
         db.session.delete(product)
         return product.to_dict(), 204
     
-class WishlistItems(Resource):
+"""class WishlistItems(Resource):
     @jwt_required
     def get(self):
         current_user_id = get_jwt_identity()
@@ -90,7 +90,7 @@ class WishlistItems(Resource):
         db.session.add(wishlist)
         db.session.commit()
         return wishlist.to_dict(), 201
-
+"""
 class UserSpecific(Resource):
     @jwt_required
     def get(self):
@@ -132,7 +132,7 @@ class UserSpecific(Resource):
 
 
 product_api.add_resource(UserSpecific,'/recommended_products',endpoint='recommended_products')
-product_api.add_resource(WishlistItems,'/wishlists',endpoint='wishlists')            
+#product_api.add_resource(WishlistItems,'/wishlists',endpoint='wishlists')            
 product_api.add_resource(ProductResource,'/products',endpoint='products')
 product_api.add_resource(ProductById,'/products/<int:product_id>',endpoint='product_by_id')
 
