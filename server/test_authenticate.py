@@ -4,6 +4,7 @@ from app import create_app
 from models import db, User
 
 
+
 class AuthenticateTestCase(unittest.TestCase):
 
     def setUp(self):

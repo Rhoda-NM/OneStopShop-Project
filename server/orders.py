@@ -114,7 +114,7 @@ def complete_order(order_id):
 @jwt_required()
 def get_orders():
     current_user_id = get_jwt_identity()
-    orders = Order.query.filter_by(user_id=current_user_id, status='cart').all()
+    orders = Order.query.filter_by(user_id=current_user_id, status='completed').all()
     return jsonify([order.serialize() for order in orders])
 
 
