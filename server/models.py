@@ -5,7 +5,8 @@ from sqlalchemy.orm import validates, relationship,backref
 from sqlalchemy.ext.hybrid import hybrid_property
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from config import bcrypt, db
+from config import  db
+from app import bcrypt
 
 # Association table for many-to-many relationship between users and products
 
@@ -106,7 +107,15 @@ class Order(db.Model, SerializerMixin):
     items = association_proxy('order_items', 'product')
 
     serialize_rules = ('-order_items', '-user', 'created_at', 'updated_at')
-
+    def serialize(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'total_price': self.total_price,
+            'status': self.status,
+            'created_at': self.created_at.isoformat(),
+            'order_items': [item.serialize() for item in self.order_items]
+        }
 
 class OrderItem(db.Model, SerializerMixin):
     __tablename__ = 'order_items'
@@ -126,6 +135,15 @@ class OrderItem(db.Model, SerializerMixin):
         if value <= 0:
             raise ValueError(f'{key.capitalize()} must be greater than 0')
         return value
+    
+    def serialize(self):
+        return {
+            'id': self.id,
+            'order_id': self.order_id,
+            'product_id': self.product_id,
+            'quantity': self.quantity,
+            'price': self.price
+        }
 
 
 class ViewingHistory(db.Model, SerializerMixin):

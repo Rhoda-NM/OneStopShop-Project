@@ -12,7 +12,42 @@ order_api = Api(order_bp)
 
 def init_jwt(app):
     jwt.init_app(app)
+
+#view items in cart
+@order_bp.route('/cart', methods=['GET'])
+@jwt_required()
+def view_cart():
+    user_id = get_jwt_identity()
+    order = Order.query.filter_by(user_id=user_id, status='cart').first()
+    if not order:
+        return jsonify({'message': 'No items in the cart'}), 200
+    return jsonify(order.serialize()), 200
+
+#vremove items from cart
+@order_bp.route('/cart/<int:product_id>', methods=['DELETE'])
+@jwt_required()
+def remove_from_cart(product_id):
+    user_id = get_jwt_identity()
+    order = Order.query.filter_by(user_id=user_id, status='cart').first()
+    if not order:
+        return jsonify({'error': 'No active cart found'}), 400
+
+    order_item = OrderItem.query.filter_by(order_id=order.id, product_id=product_id).first()
+    if not order_item:
+        return jsonify({'error': 'Item not found in cart'}), 404
+
+    order.total_price -= order_item.price * order_item.quantity  # Adjust the total price
+    db.session.delete(order_item)
+    db.session.commit()
+
+    # Check if the cart is empty
+    if not order.order_items:
+        db.session.delete(order)
+        db.session.commit()
+        return jsonify({'message': 'Cart is now empty'}), 200
     
+    return jsonify(order.serialize()), 200
+
 #Adding items to cart
 @order_bp.route('/cart', methods=['POST'])
 @jwt_required()
@@ -79,7 +114,7 @@ def complete_order(order_id):
 @jwt_required()
 def get_orders():
     current_user_id = get_jwt_identity()
-    orders = Order.query.filter_by(user_id=current_user_id, status='cart').all()
+    orders = Order.query.filter_by(user_id=current_user_id, status='completed').all()
     return jsonify([order.serialize() for order in orders])
 
 

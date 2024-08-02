@@ -18,7 +18,7 @@ def init_jwt(app):
 @jwt_required()
 def view_wishlist():
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id) 
     return jsonify([product.serialize() for product in user.wishlists]), 200
 
 #add to wishlist
@@ -29,13 +29,13 @@ def add_to_wishlist():
     user_id = get_jwt_identity()
     product_id = data.get('product_id')
 
-    user = User.query.get(user_id)
-    product = Product.query.get(product_id)
+    user = db.session.get(User, user_id) 
+    product = db.session.get(Product, product_id) 
 
     if product not in user.wishlists:
         user.wishlists.append(product)
         db.session.commit()
-        return jsonify({'message': 'product added to wishlist'}), 201
+        return jsonify({'message': 'Product added to wishlist'}), 201
     else:
         return jsonify({'message': 'Product already in wishlist'}),200
 
@@ -44,8 +44,8 @@ def add_to_wishlist():
 def remove_from_wishlist(product_id):
     user_id = get_jwt_identity()
     
-    user = User.query.get(user_id)
-    product = Product.query.get(product_id)
+    user = db.session.get(User, user_id) 
+    product = db.session.get(Product, product_id) 
     
     if product in user.wishlists:
         user.wishlists.remove(product)
@@ -53,24 +53,5 @@ def remove_from_wishlist(product_id):
         return jsonify({'message': 'Product removed from wishlist'}), 200
     else:
         return jsonify({'message': 'Product not in wishlist'}), 404 
-"""
-@wishlist_bp.route('/wishlist', methods=['POST'])
 
 
-
-@wishlist_bp.route('/wishlist/<int:product_id>', methods=['DELETE'])
-@jwt_required()
-def remove_from_wishlist(product_id):
-    user_id = get_jwt_identity()
-    wishlist_item = Wishlist.query.filter_by(user_id=user_id, product_id=product_id).first()
-
-    if not wishlist_item:
-        return jsonify({'error': 'Product not found in wishlist'}), 404
-
-    db.session.delete(wishlist_item)
-    db.session.commit()
-
-    return '', 204
-
-
-"""
