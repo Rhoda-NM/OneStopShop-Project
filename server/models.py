@@ -5,7 +5,8 @@ from sqlalchemy.orm import validates, relationship,backref
 from sqlalchemy.ext.hybrid import hybrid_property
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from config import bcrypt, db
+from config import  db
+from app import bcrypt
 
 # Association table for many-to-many relationship between users and products
 
