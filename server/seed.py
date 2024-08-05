@@ -1,5 +1,5 @@
 from datetime import datetime
-from app import app
+from app import create_app
 from sqlalchemy.exc import IntegrityError
 from models import db, User, Product, Order, OrderItem
 
@@ -100,5 +100,6 @@ def seed_db():
 
 # Run the seed function within the app context
 if __name__ == '__main__':
+    app = create_app('development')
     with app.app_context():
         seed_db()
