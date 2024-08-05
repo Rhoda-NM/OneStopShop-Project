@@ -1,5 +1,5 @@
 # Import necessary modules
-from app import db,app
+from config import db,app
 from config import bcrypt
 from models import User, Product, Order, OrderItem, ViewingHistory, SearchQuery, Engagement
 
@@ -30,7 +30,6 @@ def seed_db():
     db.session.commit()
 
     # Add products to wishlists
-    user1.wishlists.append(product1)
     user1.wishlists.append(product2)
     user2.wishlists.append(product3)
 
