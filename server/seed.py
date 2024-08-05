@@ -2,7 +2,11 @@
 from config import db,app
 from config import bcrypt
 from models import User, Product, Order, OrderItem, ViewingHistory, SearchQuery, Engagement
+from datetime import datetime
+from app import create_app
+from sqlalchemy.exc import IntegrityError
 
+# Function to seed the database
 def seed_db():
     # Drop and recreate the database
     db.drop_all()
@@ -82,6 +86,8 @@ def seed_db():
 
     print("Database seeded successfully!")
 
-if __name__ == "__main__":
+# Run the seed function within the app context
+if __name__ == '__main__':
+    app = create_app('development')
     with app.app_context():
         seed_db()
