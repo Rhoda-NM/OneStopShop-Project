@@ -84,43 +84,6 @@ def delete_product(product_id):
     db.session.commit()
     return '', 204
 
-# Wishlist
-@product_bp.route('/wishlist', methods=['POST'])
-@jwt_required()
-def add_to_wishlist():
-    data = request.get_json()
-    user_id = get_jwt_identity()
-    product_id = data.get('product_id')
-
-    user = User.query.filter(User.id == user_id).first()
-    product = Product.query.filter(Product.id == product_id).first()
-
-    if product not in user.wishlists:
-        user.wishlists.append(product)
-        db.session.commit()
-        return jsonify({'message': 'Product added to wishlist'}), 201
-    else:
-        return jsonify({'message': 'Product already in wishlist'}), 200
-
-@product_bp.route('/wishlist', methods=['DELETE'])
-@jwt_required()
-def remove_from_wishlist():
-    data = request.get_json()
-    user_id = get_jwt_identity()
-    user =User.query.filter(User.id == user_id).first()
-    wishlist_item = user.wishlists
-    if not wishlist_item:
-        return jsonify({"message": "Wishlist item not found"}), 404
-    db.session.delete(wishlist_item)
-    db.session.commit()
-    return '', 204
-@product_bp.route('/wishlist',methods=['GET'])
-@jwt_required()
-def get_user_wishlist():
-    user_id = get_jwt_identity()
-    user = User.query.filter(User.id== user_id).first()
-    wishlist_products = [product.serialize() for product in user.wishlists]
-    return jsonify(wishlist_products), 200
 
 # Recommended Products
 @product_bp.route('/recommended_products', methods=['GET'])
