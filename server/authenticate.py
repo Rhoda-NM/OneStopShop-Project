@@ -28,9 +28,9 @@ def allow(*allowed_roles):
         @wraps(fn)
         def decorator(*args, **kwargs):
             user =  current_user
-            roles = [role.name  for role in user.roles]
+            user_role = user.role
             for role in allowed_roles:
-                if role in roles:
+                if role == user_role:
                     return fn(*args, **kwargs)
             else:
                 return {"msg":"Access Denied"}, 403
