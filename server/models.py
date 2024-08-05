@@ -165,7 +165,7 @@ class SearchQuery(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    query = db.Column(db.String(200))
+    search_query = db.Column(db.String(200))
     searched_at = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('User', backref='search_queries')

@@ -1,7 +1,7 @@
 from flask import Flask, make_response, jsonify, session, request, current_app, Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from config import api, jwt, db, app
-from models import Product, User, ViewingHistory, SearchQuery, Engagement
+from models import Product, User, ViewingHistory, SearchQuery, Engagement,wishlist_table
 from authenticate import allow
 
 product_bp = Blueprint('product_bp', __name__, url_prefix='/api')
@@ -24,7 +24,8 @@ def create_product():
     data = request.get_json()
     product = Product(
         name=data['name'], 
-        category=data['category'], 
+        category=data['category'],
+        image_url=data['image_url'],   
         price=data['price'], 
         description=data['description'], 
         stock=data['stock'], 
@@ -43,15 +44,20 @@ def get_product(product_id):
 
 @product_bp.route('/products/<int:product_id>', methods=['PATCH'])
 @jwt_required()
+@allow('admin','seller')
 def update_product(product_id):
     current_user_id = get_jwt_identity()
+    user = User.query.filter(User.id == current_user_id).first()
+    role = user.role
     product = Product.query.filter_by(id=product_id).first()
     data = request.get_json()
     if not product:
         return jsonify({"message": "Product not found"}), 404
-    if product.user_id != current_user_id:
-        return jsonify({"message": "User not authorized"}), 401
     
+    if role == 'seller':
+        if product.user_id != current_user_id:
+            return jsonify({"message": "User not authorized"}), 401
+
     for key, value in data.items():
         if key != 'id' and hasattr(product, key):
             setattr(product, key, value)
@@ -63,13 +69,17 @@ def update_product(product_id):
 
 @product_bp.route('/products/<int:product_id>', methods=['DELETE'])
 @jwt_required()
+@allow('admin','seller')
 def delete_product(product_id):
     current_user_id = get_jwt_identity()
+    user = User.query.filter(User.id == current_user_id).first()
+    role = user.role
     product = Product.query.filter_by(id=product_id).first()
     if not product:
         return jsonify({"message": "Product not found"}), 404
-    if product.user_id != current_user_id:
-        return jsonify({"message": "User not authorized"}), 401
+    if role == 'seller':
+        if product.user_id != current_user_id:
+            return jsonify({"message": "User not authorized"}), 401
     db.session.delete(product)
     db.session.commit()
     return '', 204
@@ -82,8 +92,8 @@ def add_to_wishlist():
     user_id = get_jwt_identity()
     product_id = data.get('product_id')
 
-    user = User.query.get(user_id)
-    product = Product.query.get(product_id)
+    user = User.query.filter(User.id == user_id).first()
+    product = Product.query.filter(Product.id == product_id).first()
 
     if product not in user.wishlists:
         user.wishlists.append(product)
@@ -97,12 +107,20 @@ def add_to_wishlist():
 def remove_from_wishlist():
     data = request.get_json()
     user_id = get_jwt_identity()
-    wishlist_item = Wishlist.query.filter_by(user_id=user_id, product_id=data['product_id']).first()
+    user =User.query.filter(User.id == user_id).first()
+    wishlist_item = user.wishlists
     if not wishlist_item:
         return jsonify({"message": "Wishlist item not found"}), 404
     db.session.delete(wishlist_item)
     db.session.commit()
     return '', 204
+@product_bp.route('/wishlist',methods=['GET'])
+@jwt_required()
+def get_user_wishlist():
+    user_id = get_jwt_identity()
+    user = User.query.filter(User.id== user_id).first()
+    wishlist_products = [product.serialize() for product in user.wishlists]
+    return jsonify(wishlist_products), 200
 
 # Recommended Products
 @product_bp.route('/recommended_products', methods=['GET'])
