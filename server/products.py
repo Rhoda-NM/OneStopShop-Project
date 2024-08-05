@@ -1,7 +1,7 @@
 from flask import Flask, make_response, jsonify, session, request, current_app, Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from config import api, jwt, db, app
-from models import Product, User, ViewingHistory, SearchQuery, Engagement
+from models import Product, User, ViewingHistory, SearchQuery, Engagement,wishlist_table
 from authenticate import allow
 
 product_bp = Blueprint('product_bp', __name__, url_prefix='/api')
@@ -24,7 +24,8 @@ def create_product():
     data = request.get_json()
     product = Product(
         name=data['name'], 
-        category=data['category'], 
+        category=data['category'],
+        image_url=data['image_url'],   
         price=data['price'], 
         description=data['description'], 
         stock=data['stock'], 
@@ -43,15 +44,20 @@ def get_product(product_id):
 
 @product_bp.route('/products/<int:product_id>', methods=['PATCH'])
 @jwt_required()
+@allow('admin','seller')
 def update_product(product_id):
     current_user_id = get_jwt_identity()
+    user = User.query.filter(User.id == current_user_id).first()
+    role = user.role
     product = Product.query.filter_by(id=product_id).first()
     data = request.get_json()
     if not product:
         return jsonify({"message": "Product not found"}), 404
-    if product.user_id != current_user_id:
-        return jsonify({"message": "User not authorized"}), 401
     
+    if role == 'seller':
+        if product.user_id != current_user_id:
+            return jsonify({"message": "User not authorized"}), 401
+
     for key, value in data.items():
         if key != 'id' and hasattr(product, key):
             setattr(product, key, value)
@@ -63,13 +69,17 @@ def update_product(product_id):
 
 @product_bp.route('/products/<int:product_id>', methods=['DELETE'])
 @jwt_required()
+@allow('admin','seller')
 def delete_product(product_id):
     current_user_id = get_jwt_identity()
+    user = User.query.filter(User.id == current_user_id).first()
+    role = user.role
     product = Product.query.filter_by(id=product_id).first()
     if not product:
         return jsonify({"message": "Product not found"}), 404
-    if product.user_id != current_user_id:
-        return jsonify({"message": "User not authorized"}), 401
+    if role == 'seller':
+        if product.user_id != current_user_id:
+            return jsonify({"message": "User not authorized"}), 401
     db.session.delete(product)
     db.session.commit()
     return '', 204
