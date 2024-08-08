@@ -187,19 +187,6 @@ class Engagement(db.Model, SerializerMixin):
 
     serialize_rules = ('-user', '-product', '-engaged_at')
 
-
-class Rating(db.Model, SerializerMixin):
-    __tablename__ = 'ratings'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
-
-    user = db.relationship('User', back_populates='wishlists')
-    product = db.relationship('Product', backref='wishlists')
-
-    serialize_rules = ('-user', '-product')
-
 class Rating(db.Model, SerializerMixin):
     __tablename__ = 'ratings'
 

@@ -5,7 +5,6 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_restful import  Api
-from models import User
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
@@ -16,7 +15,7 @@ def create_app(config_name=None):
     app.config.from_object(get_config(config_name))
 
     # Initialize extensions
-    db.init_app(app)
+    #db.init_app(app)
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     jwt.init_app(app)
@@ -26,8 +25,7 @@ def create_app(config_name=None):
     from authenticate import authenticate_bp
     from products import product_bp
     from orders import order_bp
-    from wishlist import wishlist_bp
-    
+    from wishlist import wishlist_bp    
     from search import search_bp
 
     app.register_blueprint(authenticate_bp)
@@ -36,9 +34,7 @@ def create_app(config_name=None):
     app.register_blueprint(wishlist_bp)
     app.register_blueprint(search_bp)
 
-    @app.route('/')
-    def index():
-        return '<h1>Project Server </h1>'               
+
     return app
 
 

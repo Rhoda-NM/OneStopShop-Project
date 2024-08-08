@@ -1,7 +1,7 @@
 # Import necessary modules
-from config import db,app
+from config import db, app
 from config import bcrypt
-from models import User, Product, Order, OrderItem, ViewingHistory, SearchQuery, Engagement
+from models import User, Product, Order, OrderItem, ViewingHistory, SearchQuery, Engagement, Rating, Discount
 from datetime import datetime
 from app import create_app
 from sqlalchemy.exc import IntegrityError
@@ -82,6 +82,39 @@ def seed_db():
 
     # Add engagements to session
     db.session.add_all([engagement1, engagement2, engagement3])
+    db.session.commit()
+
+    # Create some ratings
+    rating1 = Rating(product_id=product1.id, user_id=user1.id, rating=5, comment="Excellent product!")
+    rating2 = Rating(product_id=product2.id, user_id=user2.id, rating=4, comment="Very good product!")
+    rating3 = Rating(product_id=product3.id, user_id=user1.id, rating=3, comment="Average product.")
+
+    # Add ratings to session
+    db.session.add_all([rating1, rating2, rating3])
+    db.session.commit()
+
+    # Create some discounts
+    discount1 = Discount(
+        product_id=product1.id,
+        discount_percentage=10.0,
+        start_date=datetime(2024, 8, 1),
+        end_date=datetime(2024, 8, 31)
+    )
+    discount2 = Discount(
+        product_id=product2.id,
+        discount_percentage=15.0,
+        start_date=datetime(2024, 8, 10),
+        end_date=datetime(2024, 8, 20)
+    )
+    discount3 = Discount(
+        product_id=product3.id,
+        discount_percentage=5.0,
+        start_date=datetime(2024, 8, 15),
+        end_date=datetime(2024, 8, 25)
+    )
+
+    # Add discounts to session
+    db.session.add_all([discount1, discount2, discount3])
     db.session.commit()
 
     print("Database seeded successfully!")
