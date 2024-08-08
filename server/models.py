@@ -29,6 +29,7 @@ class User(db.Model, SerializerMixin):
     orders = db.relationship('Order', backref='user')
     order_items = association_proxy('orders', 'order_items')
     products = db.relationship('Product', back_populates='seller')
+    cart_items = db.relationship('CartItem', backref='user')
    
     wishlists = relationship('Product', secondary=wishlist_table, backref=backref('wishlisted_by_users', lazy='dynamic'))
 
@@ -73,6 +74,7 @@ class Product(db.Model, SerializerMixin):
     seller = db.relationship('User', back_populates='products')
 
     order_items = db.relationship('OrderItem', backref='product')
+    cart_items = db.relationship('CartItem', backref='product')
 
     serialize_rules = ('-order_items', '-created_at', '-updated_at','-seller')
 
@@ -91,7 +93,36 @@ class Product(db.Model, SerializerMixin):
             'image_url': self.image_url,
             'description': self.description
         }
+    
+class CartItem(db.Model, SerializerMixin):
+    __tablename__ = 'cart_items'
 
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.now())
+
+    user = db.relationship('User', backref='cart_items')
+    product = db.relationship('Product', backref='cart_items')
+
+    serialize_rules = ('-user', '-product', '-created_at', '-updated_at')
+
+    @validates('quantity')
+    def validate_fields(self, key, value):
+        if value <= 0:
+            raise ValueError(f'{key.capitalize()} must be greater than 0')
+        return value
+    
+    def serialize(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'product_id': self.product_id,
+            'quantity': self.quantity,
+            'price': self.product.price
+        }
 
 class Order(db.Model, SerializerMixin):
     __tablename__ = 'orders'
