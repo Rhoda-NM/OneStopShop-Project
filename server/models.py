@@ -5,7 +5,8 @@ from sqlalchemy.orm import validates, relationship,backref
 from sqlalchemy.ext.hybrid import hybrid_property
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from config import bcrypt, db
+from config import  db
+from app import bcrypt
 
 # Association table for many-to-many relationship between users and products
 
@@ -106,7 +107,15 @@ class Order(db.Model, SerializerMixin):
     items = association_proxy('order_items', 'product')
 
     serialize_rules = ('-order_items', '-user', 'created_at', 'updated_at')
-
+    def serialize(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'total_price': self.total_price,
+            'status': self.status,
+            'created_at': self.created_at.isoformat(),
+            'order_items': [item.serialize() for item in self.order_items]
+        }
 
 class OrderItem(db.Model, SerializerMixin):
     __tablename__ = 'order_items'
@@ -126,6 +135,15 @@ class OrderItem(db.Model, SerializerMixin):
         if value <= 0:
             raise ValueError(f'{key.capitalize()} must be greater than 0')
         return value
+    
+    def serialize(self):
+        return {
+            'id': self.id,
+            'order_id': self.order_id,
+            'product_id': self.product_id,
+            'quantity': self.quantity,
+            'price': self.price
+        }
 
 
 class ViewingHistory(db.Model, SerializerMixin):
@@ -147,7 +165,7 @@ class SearchQuery(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    query = db.Column(db.String(200))
+    search_query = db.Column(db.String(200))
     searched_at = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('User', backref='search_queries')
@@ -169,3 +187,33 @@ class Engagement(db.Model, SerializerMixin):
 
     serialize_rules = ('-user', '-product', '-engaged_at')
 
+class Rating(db.Model, SerializerMixin):
+    __tablename__ = 'ratings'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    product_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __init__(self, product_id, user_id, rating, comment=None):
+        self.product_id = product_id
+        self.user_id = user_id
+        self.rating = rating
+        self.comment = comment
+
+class Discount(db.Model, SerializerMixin):
+    __tablename__ = 'discounts'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    product_id = db.Column(db.Integer, nullable=False)
+    discount_percentage = db.Column(db.Float, nullable=False)
+    start_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, product_id, discount_percentage, start_date, end_date):
+        self.product_id = product_id
+        self.discount_percentage = discount_percentage
+        self.start_date = start_date
+        self.end_date = end_date

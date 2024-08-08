@@ -21,16 +21,16 @@ def user_identity_lookup(user_id):
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
-    return User.query.filter_by(id=identity).one_or_none()
+    return db.session.get(User, identity)
 
 def allow(*allowed_roles):
     def wrapper(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
             user =  current_user
-            roles = [role.name  for role in user.roles]
+            user_role = user.role
             for role in allowed_roles:
-                if role in roles:
+                if role == user_role:
                     return fn(*args, **kwargs)
             else:
                 return {"msg":"Access Denied"}, 403
@@ -60,7 +60,10 @@ class Register(Resource):
         email = data.get('email')
         username = data.get('username')
         password = data.get('password')
-        role= "user"
+        role= data.get('role')
+        if not role:
+            role = 'user'
+        
         if username and email and password:
             existing_user = User.query.filter(
                 (User.username == username) | (User.email == email)
@@ -86,7 +89,7 @@ class Login(Resource):
 
     def post(self):
         data = login_args.parse_args()
-        password = data.get('password')
+        password = data.get('password') 
         # check if the user exists in our db
         user = User.query.filter_by(email=data.get('email')).first()
         if user and user.authenticate(password):
@@ -104,13 +107,16 @@ class Login(Resource):
 
 @authenticate_bp.route('/update_user/<int:id>', methods=['PUT'])
 @jwt_required()
-def update_user():
+def update_user(id):
     current_user_id = get_jwt_identity()
+    if current_user_id != id:
+        return jsonify({"msg": "UNauthorized access"}), 403
+    
     data = request.get_json()
     email = data.get('email')
     username = data.get('username')
 
-    user = User.query.get(current_user_id)
+    user = db.session.get(User, current_user_id)
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -126,7 +132,9 @@ def update_user():
 @authenticate_bp.route('/delete/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_user(id):
-    user = User.query.get_or_404(id)
+    user = db.session.get(User, id)
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
     db.session.delete(user)
     db.session.commit()
     return '', 204

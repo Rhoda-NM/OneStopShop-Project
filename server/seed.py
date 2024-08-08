@@ -1,104 +1,126 @@
+# Import necessary modules
+from config import db, app
+from config import bcrypt
+from models import User, Product, Order, OrderItem, ViewingHistory, SearchQuery, Engagement, Rating, Discount
 from datetime import datetime
-from app import app
+from app import create_app
 from sqlalchemy.exc import IntegrityError
-from models import db, User, Product, Order, OrderItem
 
 # Function to seed the database
 def seed_db():
-    # Ensure the tables are created
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
-        print("seeding database")
+    # Drop and recreate the database
+    db.drop_all()
+    db.create_all()
 
-        # Create sample users
-        users = [
-            {'username': 'john_doe', 'email': 'john@example.com', 'password': 'password', 'role': 'customer'},
-            {'username': 'jane_smith', 'email': 'jane@example.com', 'password': 'password', 'role': 'customer'},
-            {'username': 'admin', 'email': 'admin@example.com', 'password': 'adminpassword', 'role': 'admin'},
-        ]
+    # Create some users
+    user1 = User(username='user1', email='user1@example.com', role='customer')
+    user1.set_password('password1')
+    user2 = User(username='user2', email='user2@example.com', role='customer')
+    user2.set_password('password2')
+    user3 = User(username='admin', email='admin@example.com', role='admin')
+    user3.set_password('adminpassword')
 
-        # Add users to the session
-        for user_data in users:
-            try:
-                user = User(
-                    username=user_data['username'],
-                    email=user_data['email'],
-                    role=user_data['role']
-                )
-                user.set_password(user_data['password'])  # Use the set_password method
-                db.session.add(user)
-                db.session.commit()
-            except IntegrityError as e:
-                db.session.rollback()
-                print(f"Error adding user {user_data['username']}: {e}")
+    # Add users to session
+    db.session.add_all([user1, user2, user3])
+    db.session.commit()
 
-        # Create sample products
-        products = [
-            # Electronics
-            Product(name='Laptop', user_id='3', category='Electronics', image_url='http://example.com/laptop.jpg', price=999.99, description='High performance laptop', stock=50),
-            Product(name='Smart TV', user_id='3', category='Electronics', image_url='http://example.com/smart_tv.jpg', price=599.99, description='55 inch 4K Smart TV', stock=30),
-            Product(name='Bluetooth Speaker', user_id='3', category='Electronics', image_url='http://example.com/bluetooth_speaker.jpg', price=49.99, description='Portable Bluetooth speaker', stock=100),
+    # Create some products
+    product1 = Product(name='Product 1', category='Category A', image_url='http://example.com/product1.jpg', price=10.99, stock=100, user_id=user1.id)
+    product2 = Product(name='Product 2', category='Category B', image_url='http://example.com/product2.jpg', price=20.99, stock=200, user_id=user1.id)
+    product3 = Product(name='Product 3', category='Category A', image_url='http://example.com/product3.jpg', price=30.99, stock=300, user_id=user2.id)
 
-            # Mobiles
-            Product(name='Smartphone A', user_id='3', category='Mobiles', image_url='http://example.com/smartphone_a.jpg', price=699.99, description='Latest model smartphone', stock=200),
-            Product(name='Smartphone B', user_id='3', category='Mobiles', image_url='http://example.com/smartphone_b.jpg', price=399.99, description='Affordable smartphone with great features', stock=150),
+    # Add products to session
+    db.session.add_all([product1, product2, product3])
+    db.session.commit()
 
-            # Clothes
-            Product(name='Men\'s T-Shirt', user_id='3', category='Clothes', image_url='http://example.com/mens_tshirt.jpg', price=19.99, description='Cotton t-shirt', stock=300),
-            Product(name='Women\'s Dress', user_id='3', category='Clothes', image_url='http://example.com/womens_dress.jpg', price=49.99, description='Stylish summer dress', stock=200),
-            Product(name='Men\'s Jeans', user_id='3', category='Clothes', image_url='http://example.com/mens_jeans.jpg', price=39.99, description='Comfortable jeans', stock=150),
+    # Add products to wishlists
+    user1.wishlists.append(product2)
+    user2.wishlists.append(product3)
 
-            # Books
-            Product(name='Book A', user_id='3', category='Books', image_url='http://example.com/book_a.jpg', price=14.99, description='Bestselling novel', stock=500),
-            Product(name='Book B', user_id='3', category='Books', image_url='http://example.com/book_b.jpg', price=9.99, description='Inspirational self-help book', stock=400),
-        ]
+    # Commit the session to save the wishlist changes
+    db.session.commit()
 
-        # Add products to the session
-        for product in products:
-            try:
-                db.session.add(product)
-                db.session.commit()
-            except IntegrityError as e:
-                db.session.rollback()
-                print(f"Error adding product {product.name}: {e}")
+    # Create some orders
+    order1 = Order(user_id=user1.id, total_price=31.98, status='Completed')
+    order2 = Order(user_id=user2.id, total_price=20.99, status='Pending')
 
-        # Create sample orders
-        orders = [
-            Order(user_id=1, total_price=1649.97, status='completed'),
-            Order(user_id=2, total_price=1099.98, status='pending'),
-        ]
+    # Add orders to session
+    db.session.add_all([order1, order2])
+    db.session.commit()
 
-        # Add orders to the session
-        for order in orders:
-            try:
-                db.session.add(order)
-                db.session.commit()
-            except IntegrityError as e:
-                db.session.rollback()
-                print(f"Error adding order for user {order.user_id}: {e}")
+    # Create some order items
+    order_item1 = OrderItem(order_id=order1.id, product_id=product1.id, quantity=1, price=10.99)
+    order_item2 = OrderItem(order_id=order1.id, product_id=product2.id, quantity=1, price=20.99)
+    order_item3 = OrderItem(order_id=order2.id, product_id=product2.id, quantity=1, price=20.99)
 
-        # Create sample order items
-        order_items = [
-            OrderItem(order_id=1, product_id=1, quantity=1, price=999.99),
-            OrderItem(order_id=1, product_id=2, quantity=1, price=599.99),
-            OrderItem(order_id=1, product_id=3, quantity=1, price=49.99),
-            OrderItem(order_id=2, product_id=4, quantity=1, price=699.99),
-            OrderItem(order_id=2, product_id=5, quantity=1, price=399.99),
-        ]
+    # Add order items to session
+    db.session.add_all([order_item1, order_item2, order_item3])
+    db.session.commit()
 
-        # Add order items to the session
-        for order_item in order_items:
-            try:
-                db.session.add(order_item)
-                db.session.commit()
-            except IntegrityError as e:
-                db.session.rollback()
-                print(f"Error adding order item for order {order_item.order_id}: {e}")
+    # Create some viewing history
+    viewing1 = ViewingHistory(user_id=user1.id, product_id=product1.id)
+    viewing2 = ViewingHistory(user_id=user2.id, product_id=product2.id)
+    viewing3 = ViewingHistory(user_id=user1.id, product_id=product3.id)
 
-        print("finished seeding")
+    # Add viewing history to session
+    db.session.add_all([viewing1, viewing2, viewing3])
+    db.session.commit()
+
+    # Create some search queries
+    search1 = SearchQuery(user_id=user1.id, search_query='Product 1')
+    search2 = SearchQuery(user_id=user2.id, search_query='Category B')
+    search3 = SearchQuery(user_id=user3.id, search_query='Product 3')
+
+    # Add search queries to session
+    db.session.add_all([search1, search2, search3])
+    db.session.commit()
+
+    # Create some engagements
+    engagement1 = Engagement(user_id=user1.id, product_id=product1.id, watch_time=120)
+    engagement2 = Engagement(user_id=user2.id, product_id=product2.id, watch_time=240)
+    engagement3 = Engagement(user_id=user1.id, product_id=product3.id, watch_time=360)
+
+    # Add engagements to session
+    db.session.add_all([engagement1, engagement2, engagement3])
+    db.session.commit()
+
+    # Create some ratings
+    rating1 = Rating(product_id=product1.id, user_id=user1.id, rating=5, comment="Excellent product!")
+    rating2 = Rating(product_id=product2.id, user_id=user2.id, rating=4, comment="Very good product!")
+    rating3 = Rating(product_id=product3.id, user_id=user1.id, rating=3, comment="Average product.")
+
+    # Add ratings to session
+    db.session.add_all([rating1, rating2, rating3])
+    db.session.commit()
+
+    # Create some discounts
+    discount1 = Discount(
+        product_id=product1.id,
+        discount_percentage=10.0,
+        start_date=datetime(2024, 8, 1),
+        end_date=datetime(2024, 8, 31)
+    )
+    discount2 = Discount(
+        product_id=product2.id,
+        discount_percentage=15.0,
+        start_date=datetime(2024, 8, 10),
+        end_date=datetime(2024, 8, 20)
+    )
+    discount3 = Discount(
+        product_id=product3.id,
+        discount_percentage=5.0,
+        start_date=datetime(2024, 8, 15),
+        end_date=datetime(2024, 8, 25)
+    )
+
+    # Add discounts to session
+    db.session.add_all([discount1, discount2, discount3])
+    db.session.commit()
+
+    print("Database seeded successfully!")
 
 # Run the seed function within the app context
 if __name__ == '__main__':
+    app = create_app('development')
     with app.app_context():
         seed_db()
