@@ -1,7 +1,7 @@
 from datetime import datetime
 from app import create_app
 from sqlalchemy.exc import IntegrityError
-from models import db, User, Product, Order, OrderItem
+from models import db, User, Product, Order, OrderItem,SearchQuery,Engagement,ViewingHistory
 
 # Function to seed the database
 def seed_db():
