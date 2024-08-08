@@ -19,11 +19,11 @@ def create_app(config_name=None):
     jwt.init_app(app)
     api.init_app(app)
     cors.init_app(app)
-    
+
     from authenticate import authenticate_bp
     from products import product_bp
     from orders import order_bp
-    from wishlist import wishlist_bp
+    from wishlist import wishlist_bp    
     from search import search_bp
 
     app.register_blueprint(authenticate_bp)
@@ -32,9 +32,7 @@ def create_app(config_name=None):
     app.register_blueprint(wishlist_bp)
     app.register_blueprint(search_bp)
 
-    @app.route('/')
-    def index():
-        return '<h1>Project Server </h1>'               
+
     return app
 
 

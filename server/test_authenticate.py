@@ -1,4 +1,5 @@
 import unittest
+from seed import seed_db
 from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager
 from app import create_app
 from models import db, User
@@ -32,6 +33,7 @@ class AuthenticateTestCase(unittest.TestCase):
         self.app_context.pop()
 
     def populate_db(self):
+        # Create sample data
         # Create sample users
         user1 = User(username='john_doe', email='john@example.com', role='customer')
         user1.set_password('password')
