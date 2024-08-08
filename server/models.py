@@ -155,3 +155,34 @@ class Wishlist(db.Model, SerializerMixin):
     product = db.relationship('Product', backref='wishlists')
 
     serialize_rules = ('-user', '-product')
+
+class Rating(db.Model, SerializerMixin):
+    __tablename__ = 'ratings'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    product_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __init__(self, product_id, user_id, rating, comment=None):
+        self.product_id = product_id
+        self.user_id = user_id
+        self.rating = rating
+        self.comment = comment
+
+class Discount(db.Model, SerializerMixin):
+    __tablename__ = 'discounts'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    product_id = db.Column(db.Integer, nullable=False)
+    discount_percentage = db.Column(db.Float, nullable=False)
+    start_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, product_id, discount_percentage, start_date, end_date):
+        self.product_id = product_id
+        self.discount_percentage = discount_percentage
+        self.start_date = start_date
+        self.end_date = end_date
