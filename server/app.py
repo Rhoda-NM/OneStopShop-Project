@@ -7,7 +7,6 @@ from flask_cors import CORS
 from flask_restful import  Api
 from flask_sqlalchemy import SQLAlchemy
 
-db = SQLAlchemy()
 jwt = JWTManager()
 
 def create_app(config_name=None):
@@ -15,7 +14,7 @@ def create_app(config_name=None):
     app.config.from_object(get_config(config_name))
 
     # Initialize extensions
-    #db.init_app(app)
+    db.init_app(app)
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     jwt.init_app(app)
