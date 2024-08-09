@@ -1,9 +1,10 @@
 # Import necessary modules
 from config import db, app
-from config import bcrypt
-from models import User, Product, Order, OrderItem, ViewingHistory, SearchQuery, Engagement, Rating, Discount
+from models import User, Product, Order, OrderItem, ViewingHistory, SearchQuery, Engagement, Rating, Discount, Category, Tag, ProductImage
 from datetime import datetime
 from app import create_app
+import requests
+import random
 from sqlalchemy.exc import IntegrityError
 
 # Function to seed the database
@@ -13,10 +14,10 @@ def seed_db():
     db.create_all()
 
     # Create some users
-    user1 = User(username='user1', email='user1@example.com', role='customer')
-    user1.set_password('password1')
-    user2 = User(username='user2', email='user2@example.com', role='customer')
-    user2.set_password('password2')
+    user1 = User(username='user1', email='user1@example.com', role='admin')
+    user1.set_password('adminpassword')
+    user2 = User(username='user2', email='user2@example.com', role='admin')
+    user2.set_password('adminpassword')
     user3 = User(username='admin', email='admin@example.com', role='admin')
     user3.set_password('adminpassword')
 
@@ -24,7 +25,78 @@ def seed_db():
     db.session.add_all([user1, user2, user3])
     db.session.commit()
 
-    # Create some products
+    #Products API endpoint
+    fetch_url = 'https://dummyjson.com/products?limit=120'
+    response = requests.get(fetch_url)
+    if response.status_code == 200:
+        products = response.json().get('products', [])
+        users = User.query.all()
+
+        #Add products to db
+        for product_data in products:
+            # Add category
+            category_name = product_data['category']
+            if category_name != 'groceries' and category_name != 'vehicle' and category_name != 'motorcycle':
+                category = Category.query.filter_by(name=product_data['category']).first()
+                if not category:
+                    category = Category(name=category_name)
+                    db.session.add(category)
+                    db.session.flush()
+                
+                stock = product_data['stock']
+                if not stock or stock == 0:
+                    stock = 20
+                
+                # Add category
+                product = Product(
+                    name = product_data['title'],
+                    description = product_data['description'],
+                    price = product_data['price'],
+                    stock=stock,
+                    category_id = category.id,
+                    image_url=product_data['thumbnail'],
+                    sku = product_data['sku'],  # Main image or thumbnail
+                    user_id=random.choice(users).id
+                )
+                db.session.add(product)
+                #category.append(product)
+                db.session.flush()
+
+                # Add images
+                for image_url in product_data['images']:
+                    product_image = ProductImage(
+                        product_id=product.id,
+                        image_url=image_url
+                    )
+                    db.session.add(product_image)
+                
+
+                # Add tags
+                for tag_name in product_data.get('tags', []):
+                    if tag_name != product_data['category']:
+                        tag = Tag.query.filter_by(name=tag_name).first()
+                        if not tag:
+                            tag = Tag(name=tag_name, category_id=category.id)
+                            db.session.add(tag)
+                        product.tags.append(tag)
+                
+
+                # Add product ratings and reviews
+                for review in product_data.get('reviews', []):
+                    rating = Rating(
+                        product_id=product.id,
+                        user_id=random.choice(users).id,  # Assign to a random user
+                        rating=review['rating'],
+                        comment=review.get('comment')
+                    )
+                    db.session.add(rating)
+
+        db.session.commit()
+        print("Database seeded with products, images, tags, ratings, and reviews from DummyJSON!")
+    else:
+        print("Failed to fetch products from API")
+
+    """Create some products
     product1 = Product(name='Product 1', category='Category A', image_url='http://example.com/product1.jpg', price=10.99, stock=100, user_id=user1.id)
     product2 = Product(name='Product 2', category='Category B', image_url='http://example.com/product2.jpg', price=20.99, stock=200, user_id=user1.id)
     product3 = Product(name='Product 3', category='Category A', image_url='http://example.com/product3.jpg', price=30.99, stock=300, user_id=user2.id)
@@ -117,7 +189,7 @@ def seed_db():
     db.session.add_all([discount1, discount2, discount3])
     db.session.commit()
 
-    print("Database seeded successfully!")
+    print("Database seeded successfully!")"""
 
 # Run the seed function within the app context
 if __name__ == '__main__':

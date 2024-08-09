@@ -30,6 +30,9 @@ def add_to_wishlist():
     product_id = data.get('product_id')
 
     user = db.session.get(User, user_id) 
+    if not user:
+        return jsonify({"message": "You are not logged in"})
+    
     product = db.session.get(Product, product_id) 
 
     if product not in user.wishlists:
@@ -39,6 +42,7 @@ def add_to_wishlist():
     else:
         return jsonify({'message': 'Product already in wishlist'}),200
 
+#remove from wishlist
 @wishlist_bp.route('/wishlist/<int:product_id>', methods=['DELETE'])
 @jwt_required()
 def remove_from_wishlist(product_id):
@@ -54,4 +58,14 @@ def remove_from_wishlist(product_id):
     else:
         return jsonify({'message': 'Product not in wishlist'}), 404 
 
-
+#wishlist recommendation
+@wishlist_bp.route('/wishlist/recommendations', methods=['GET'])
+@jwt_required()
+def recommend_products():
+    user = User.query.get(current_user.id)
+    wishlist_tags = [tag for product in user.wishlists for tag in product.tags]
+    
+    # Get products that share the same tags
+    recommended_products = Product.query.filter(Product.tags.any(wishlist_tags)).limit(10).all()
+    
+    return jsonify([product.serialize() for product in recommended_products])
