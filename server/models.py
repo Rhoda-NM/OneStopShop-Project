@@ -14,7 +14,11 @@ wishlist_table = db.Table('wishlist_table',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True)
 )
-
+# Association table for the many-to-many relationship between Products and Tags
+product_tag_association = db.Table('product_tag_association',
+    db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),
+    db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'), primary_key=True)
+)
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
 
@@ -61,13 +65,17 @@ class Product(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
-    category = db.Column(db.String, nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
     image_url = db.Column(db.String, nullable=False)
     price = db.Column(db.Float, nullable=False)
     description = db.Column(db.Text)
+    sku = db.Column(db.String, nullable=False, unique=True)
     stock = db.Column(db.Integer, nullable=False)
+    tags = db.relationship('Tag', secondary=product_tag_association, back_populates='products')
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
+
+    images = db.relationship('ProductImage', back_populates='product', cascade='all, delete-orphan')
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     seller = db.relationship('User', back_populates='products')
@@ -89,8 +97,41 @@ class Product(db.Model, SerializerMixin):
             'category': self.category,
             'price': self.price,
             'image_url': self.image_url,
-            'description': self.description
+            'description': self.description,
+            'images': self.images
         }
+    
+class Category(db.Model):
+    __tablename__ = 'categories'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    products = db.relationship('Product', backref='category', lazy=True)
+    tags = db.relationship('Tag', backref='category', lazy=True)
+    def __repr__(self):
+        return f"<Category(name={self.name})>"
+    
+class Tag(db.Model):
+    __tablename__ = 'tags'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
+    products = db.relationship('Product', secondary=product_tag_association, back_populates='tags')
+
+    def __repr__(self):
+        return f"<Tag(name={self.name}, category_id={self.category_id})>"
+
+class ProductImage(db.Model, SerializerMixin):
+    __tablename__ = 'product_images'
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    image_url = db.Column(db.String, nullable=False)
+
+    product = db.relationship('Product', back_populates='images')
+    
+    serialize_rules = ('-product',)
 
 
 class Order(db.Model, SerializerMixin):
@@ -191,12 +232,15 @@ class Rating(db.Model, SerializerMixin):
     __tablename__ = 'ratings'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    product_id = db.Column(db.Integer, nullable=False)
-    user_id = db.Column(db.Integer, nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+    product = db.relationship('Product', backref='ratings')
+    user = db.relationship('User', backref='ratings')
+    
     def __init__(self, product_id, user_id, rating, comment=None):
         self.product_id = product_id
         self.user_id = user_id
