@@ -14,11 +14,13 @@ def init_jwt(app):
 @product_bp.route('/products', methods=['GET'])
 def get_products():
     limit = request.args.get('limit',default=None,type=int)
+    category = request.args.get('category',default=None,type=str)
     if limit is None:
         products = [product.serialize() for product in Product.query.all()]
     elif limit is not None:
         products = [product.serialize() for product in Product.query.limit(limit).all()]
-    
+    elif category != None:
+        products = [product.serialize() for product in Product.query.filter(Product.category == category).all()]
     return jsonify(products), 200
 
 # Route to fetch products by category name
