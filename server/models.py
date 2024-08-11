@@ -152,7 +152,7 @@ class ViewingHistory(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
-    viewed_at = db.Column(db.DateTime, default=datetime.now)
+    viewed_at = db.Column(db.DateTime, server_default=db.func.now())
 
     user = db.relationship('User', backref='viewing_history')
     product = db.relationship('Product', backref='viewing_history')
@@ -166,7 +166,7 @@ class SearchQuery(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     search_query = db.Column(db.String(200))
-    searched_at = db.Column(db.DateTime, default=datetime.now)
+    searched_at = db.Column(db.DateTime, server_default=db.func.now())
 
     user = db.relationship('User', backref='search_queries')
 
@@ -180,7 +180,7 @@ class Engagement(db.Model, SerializerMixin):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     watch_time = db.Column(db.Integer)
-    engaged_at = db.Column(db.DateTime, default=datetime.now)
+    engaged_at = db.Column(db.DateTime, server_default=db.func.now())
 
     user = db.relationship('User', backref='engagements')
     product = db.relationship('Product', backref='engagements')
@@ -195,13 +195,17 @@ class Rating(db.Model, SerializerMixin):
     user_id = db.Column(db.Integer, nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now(), nullable=False)
 
-    def __init__(self, product_id, user_id, rating, comment=None):
-        self.product_id = product_id
-        self.user_id = user_id
-        self.rating = rating
-        self.comment = comment
+    def serialize(self):
+        return {
+            'id': self.id,
+            'product_id': self.product_id,
+            'user_id': self.user_id,
+            'rating': self.rating,
+            'comment': self.comment,
+            'created_at': self.created_at.isoformat()
+        }
 
 class Discount(db.Model, SerializerMixin):
     __tablename__ = 'discounts'
@@ -212,8 +216,12 @@ class Discount(db.Model, SerializerMixin):
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
 
-    def __init__(self, product_id, discount_percentage, start_date, end_date):
-        self.product_id = product_id
-        self.discount_percentage = discount_percentage
-        self.start_date = start_date
-        self.end_date = end_date
+    def serialize(self):
+        return {
+            'id': self.id,
+            'product_id': self.product_id,
+            'discount_percentage': self.discount_percentage,
+            'start_date': self.start_date.isoformat(),
+            'end_date': self.end_date.isoformat()
+        }
+    
