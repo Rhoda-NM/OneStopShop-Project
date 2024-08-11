@@ -12,109 +12,128 @@ def seed_db():
     db.drop_all()
     db.create_all()
 
-    # Create some users
-    user1 = User(username='user1', email='user1@example.com', role='customer')
-    user1.set_password('password1')
-    user2 = User(username='user2', email='user2@example.com', role='customer')
-    user2.set_password('password2')
-    user3 = User(username='admin', email='admin@example.com', role='admin')
-    user3.set_password('adminpassword')
-
-    # Add users to session
-    db.session.add_all([user1, user2, user3])
+    # Create users
+    users = []
+    for i in range(1, 11):
+        user = User(username=f'user{i}', email=f'user{i}@example.com', role='customer')
+        user.set_password(f'password{i}')
+        users.append(user)
+    
+    admin = User(username='admin', email='admin@example.com', role='admin')
+    admin.set_password('adminpassword')
+    users.append(admin)
+    
+    db.session.add_all(users)
     db.session.commit()
 
-    # Create some products
-    product1 = Product(name='Product 1', category='Category A', image_url='http://example.com/product1.jpg', price=10.99, stock=100, user_id=user1.id)
-    product2 = Product(name='Product 2', category='Category B', image_url='http://example.com/product2.jpg', price=20.99, stock=200, user_id=user1.id)
-    product3 = Product(name='Product 3', category='Category A', image_url='http://example.com/product3.jpg', price=30.99, stock=300, user_id=user2.id)
+    # Create products
+    products = [
+        Product(name='Dog Food', category='Pet Supplies', image_url='https://example.com/dogfood.jpg', price=10.99, stock=100, user_id=users[0].id),
+        Product(name='CANON EOS DSLR Camera', category='Electronics', image_url='https://example.com/canon-camera.jpg', price=360.00, stock=200, user_id=users[0].id),
+        Product(name='ASUS FHD Gaming Laptop', category='Electronics', image_url='https://example.com/asus-laptop.jpg', price=700.00, stock=300, user_id=users[1].id),
+        Product(name='Curology Product Set', category='Beauty', image_url='https://example.com/curology-set.jpg', price=500.00, stock=400, user_id=users[1].id),
+        Product(name='Apple iPhone 13', category='Phones', image_url='https://example.com/iphone13.jpg', price=999.00, stock=150, user_id=users[2].id),
+        Product(name='Samsung Galaxy S21', category='Phones', image_url='https://example.com/galaxy-s21.jpg', price=899.00, stock=250, user_id=users[2].id),
+        Product(name='Sony WH-1000XM4 Headphones', category='Electronics', image_url='https://example.com/sony-headphones.jpg', price=350.00, stock=200, user_id=users[3].id),
+        Product(name='Nintendo Switch', category='Gaming', image_url='https://example.com/switch.jpg', price=299.00, stock=100, user_id=users[3].id),
+        Product(name='Instant Pot Duo', category='Home Appliances', image_url='https://example.com/instant-pot.jpg', price=89.99, stock=500, user_id=users[4].id),
+        Product(name='Fitbit Versa 3', category='Wearables', image_url='https://example.com/fitbit.jpg', price=229.95, stock=250, user_id=users[4].id)
+    ]
 
-    # Add products to session
-    db.session.add_all([product1, product2, product3])
+    db.session.add_all(products)
     db.session.commit()
 
     # Add products to wishlists
-    user1.wishlists.append(product2)
-    user2.wishlists.append(product3)
+    users[0].wishlists.extend([products[1], products[3]])
+    users[1].wishlists.append(products[2])
+    users[2].wishlists.append(products[4])
+    users[3].wishlists.append(products[5])
 
-    # Commit the session to save the wishlist changes
     db.session.commit()
 
-    # Create some orders
-    order1 = Order(user_id=user1.id, total_price=31.98, status='Completed')
-    order2 = Order(user_id=user2.id, total_price=20.99, status='Pending')
+    # Create orders
+    orders = [
+        Order(user_id=users[0].id, total_price=31.98, status='Completed'),
+        Order(user_id=users[1].id, total_price=20.99, status='Pending'),
+        Order(user_id=users[2].id, total_price=56.99, status='Shipped'),
+        Order(user_id=users[3].id, total_price=120.00, status='Completed'),
+        Order(user_id=users[4].id, total_price=450.00, status='Canceled')
+    ]
 
-    # Add orders to session
-    db.session.add_all([order1, order2])
+    db.session.add_all(orders)
     db.session.commit()
 
-    # Create some order items
-    order_item1 = OrderItem(order_id=order1.id, product_id=product1.id, quantity=1, price=10.99)
-    order_item2 = OrderItem(order_id=order1.id, product_id=product2.id, quantity=1, price=20.99)
-    order_item3 = OrderItem(order_id=order2.id, product_id=product2.id, quantity=1, price=20.99)
+    # Create order items
+    order_items = [
+        OrderItem(order_id=orders[0].id, product_id=products[0].id, quantity=1, price=10.99),
+        OrderItem(order_id=orders[0].id, product_id=products[1].id, quantity=1, price=20.99),
+        OrderItem(order_id=orders[1].id, product_id=products[2].id, quantity=1, price=20.99),
+        OrderItem(order_id=orders[2].id, product_id=products[4].id, quantity=1, price=56.99),
+        OrderItem(order_id=orders[3].id, product_id=products[5].id, quantity=2, price=60.00),
+        OrderItem(order_id=orders[4].id, product_id=products[6].id, quantity=3, price=150.00)
+    ]
 
-    # Add order items to session
-    db.session.add_all([order_item1, order_item2, order_item3])
+    db.session.add_all(order_items)
     db.session.commit()
 
-    # Create some viewing history
-    viewing1 = ViewingHistory(user_id=user1.id, product_id=product1.id)
-    viewing2 = ViewingHistory(user_id=user2.id, product_id=product2.id)
-    viewing3 = ViewingHistory(user_id=user1.id, product_id=product3.id)
+    # Create viewing history
+    viewings = [
+        ViewingHistory(user_id=users[0].id, product_id=products[0].id),
+        ViewingHistory(user_id=users[1].id, product_id=products[1].id),
+        ViewingHistory(user_id=users[0].id, product_id=products[2].id),
+        ViewingHistory(user_id=users[2].id, product_id=products[3].id),
+        ViewingHistory(user_id=users[3].id, product_id=products[4].id)
+    ]
 
-    # Add viewing history to session
-    db.session.add_all([viewing1, viewing2, viewing3])
+    db.session.add_all(viewings)
     db.session.commit()
 
-    # Create some search queries
-    search1 = SearchQuery(user_id=user1.id, search_query='Product 1')
-    search2 = SearchQuery(user_id=user2.id, search_query='Category B')
-    search3 = SearchQuery(user_id=user3.id, search_query='Product 3')
+    # Create search queries
+    search_queries = [
+        SearchQuery(user_id=users[0].id, search_query='Dog Food'),
+        SearchQuery(user_id=users[1].id, search_query='Cameras'),
+        SearchQuery(user_id=users[2].id, search_query='Gaming Laptop'),
+        SearchQuery(user_id=users[3].id, search_query='Skin Care Set'),
+        SearchQuery(user_id=users[4].id, search_query='iPhone 13')
+    ]
 
-    # Add search queries to session
-    db.session.add_all([search1, search2, search3])
+    db.session.add_all(search_queries)
     db.session.commit()
 
-    # Create some engagements
-    engagement1 = Engagement(user_id=user1.id, product_id=product1.id, watch_time=120)
-    engagement2 = Engagement(user_id=user2.id, product_id=product2.id, watch_time=240)
-    engagement3 = Engagement(user_id=user1.id, product_id=product3.id, watch_time=360)
+    # Create engagements
+    engagements = [
+        Engagement(user_id=users[0].id, product_id=products[0].id, watch_time=120),
+        Engagement(user_id=users[1].id, product_id=products[1].id, watch_time=240),
+        Engagement(user_id=users[0].id, product_id=products[2].id, watch_time=360),
+        Engagement(user_id=users[2].id, product_id=products[3].id, watch_time=180),
+        Engagement(user_id=users[3].id, product_id=products[4].id, watch_time=300)
+    ]
 
-    # Add engagements to session
-    db.session.add_all([engagement1, engagement2, engagement3])
+    db.session.add_all(engagements)
     db.session.commit()
 
-    # Create some ratings
-    rating1 = Rating(product_id=product1.id, user_id=user1.id, rating=5, comment="Excellent product!")
-    rating2 = Rating(product_id=product2.id, user_id=user2.id, rating=4, comment="Very good product!")
-    rating3 = Rating(product_id=product3.id, user_id=user1.id, rating=3, comment="Average product.")
+    # Create ratings
+    ratings = [
+        Rating(product_id=products[0].id, user_id=users[0].id, rating=5, comment="Excellent product!"),
+        Rating(product_id=products[1].id, user_id=users[1].id, rating=4, comment="Very good product!"),
+        Rating(product_id=products[2].id, user_id=users[2].id, rating=3, comment="Average product."),
+        Rating(product_id=products[3].id, user_id=users[3].id, rating=4, comment="Good value for money."),
+        Rating(product_id=products[4].id, user_id=users[4].id, rating=2, comment="Not as expected.")
+    ]
 
-    # Add ratings to session
-    db.session.add_all([rating1, rating2, rating3])
+    db.session.add_all(ratings)
     db.session.commit()
 
-    # Create some discounts
-    discount1 = Discount(
-        product_id=product1.id,
-        discount_percentage=10.0,
-        start_date=datetime(2024, 8, 1),
-        end_date=datetime(2024, 8, 31)
-    )
-    discount2 = Discount(
-        product_id=product2.id,
-        discount_percentage=15.0,
-        start_date=datetime(2024, 8, 10),
-        end_date=datetime(2024, 8, 20)
-    )
-    discount3 = Discount(
-        product_id=product3.id,
-        discount_percentage=5.0,
-        start_date=datetime(2024, 8, 15),
-        end_date=datetime(2024, 8, 25)
-    )
+    # Create discounts
+    discounts = [
+        Discount(product_id=products[0].id, discount_percentage=10.0, start_date=datetime(2024, 8, 1), end_date=datetime(2024, 8, 31)),
+        Discount(product_id=products[1].id, discount_percentage=15.0, start_date=datetime(2024, 8, 10), end_date=datetime(2024, 8, 20)),
+        Discount(product_id=products[2].id, discount_percentage=5.0, start_date=datetime(2024, 8, 15), end_date=datetime(2024, 8, 25)),
+        Discount(product_id=products[3].id, discount_percentage=20.0, start_date=datetime(2024, 9, 1), end_date=datetime(2024, 9, 30)),
+        Discount(product_id=products[4].id, discount_percentage=25.0, start_date=datetime(2024, 8, 5), end_date=datetime(2024, 8, 15))
+    ]
 
-    # Add discounts to session
-    db.session.add_all([discount1, discount2, discount3])
+    db.session.add_all(discounts)
     db.session.commit()
 
     print("Database seeded successfully!")
