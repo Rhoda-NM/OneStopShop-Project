@@ -105,6 +105,16 @@ class Login(Resource):
         token = create_access_token(identity= current_user.id )
         return {"token":token}
 
+@authenticate_bp.route('/me', methods=['GET'])
+@jwt_required()
+def get_current_user():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'msg': 'User not found'}), 404
+
+    return jsonify(user.serialize()), 200
+
 @authenticate_bp.route('/update_user/<int:id>', methods=['PUT'])
 @jwt_required()
 def update_user(id):
