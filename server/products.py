@@ -72,10 +72,21 @@ def create_product():
 # get a product
 @product_bp.route('/products/<int:product_id>', methods=['GET'])
 def get_product(product_id):
-    product = Product.query.filter_by(id=product_id).first()
+    product = db.session.get(Product, product_id)
     if not product:
-        return jsonify({"message": "Product not found"}), 404
-    return jsonify(product.serialize()), 200
+        return jsonify({'error': 'Product not found'}), 404
+
+    product_data = product.serialize()
+
+    # Fetch ratings
+    ratings = Rating.query.filter_by(product_id=product_id).all()
+    product_data['ratings'] = [rating.serialize() for rating in ratings]
+
+    # Fetch discounts
+    discounts = Discount.query.filter_by(product_id=product_id).all()
+    product_data['discounts'] = [discount.serialize() for discount in discounts]
+
+    return jsonify(product_data), 200
 
 # patch a product
 @product_bp.route('/products/<int:product_id>', methods=['PATCH'])
