@@ -142,6 +142,15 @@ class Product(db.Model, SerializerMixin):
             'sku': self.sku,
             'stock': self.stock,
         }
+    def serialize_limited(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'tags': [tag.serialize() for tag in self.tags],  # serialize tags relationship
+            'description': self.description,
+            'image_url': self.image_url,
+            'category': self.category.serialize(),  # serialize the category relationship
+        }
     
 class Category(db.Model):
     __tablename__ = 'categories'

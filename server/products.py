@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from config import api, jwt, db, app
 from models import Product, User,Category, Tag, ViewingHistory, SearchQuery, Engagement,wishlist_table, Rating, Discount
 from authenticate import allow
+from Search import search_products
 
 product_bp = Blueprint('product_bp', __name__, url_prefix='/api')
 
@@ -257,3 +258,10 @@ def update_discount(id):
         discount.end_date = data['end_date']
     db.session.commit()
     return jsonify(discount.serialize()), 200
+
+@product_bp.route('/search_details', methods=['GET'])
+def search_product_details():
+    query = request.args.get('query')
+    product_data=[product.serialize() for product in Product.query.all()]
+    results = search_products(query,product_data)
+    return jsonify(results),200
