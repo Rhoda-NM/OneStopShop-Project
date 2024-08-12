@@ -8,7 +8,7 @@ from datetime import datetime
 from config import  db
 from app import bcrypt
 
-# Association table for many-to-many relationship between users and products
+# Association table for many-to-many relationship between users and products56
 
 wishlist_table = db.Table('wishlist_table',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
@@ -325,6 +325,7 @@ class Rating(db.Model, SerializerMixin):
             'id': self.id,
             'product_id': self.product_id,
             'user_id': self.user_id,
+            "username": self.user.username,
             'rating': self.rating,
             'comment': self.comment,
             'created_at': self.created_at.isoformat()
