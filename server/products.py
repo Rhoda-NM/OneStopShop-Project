@@ -1,4 +1,4 @@
-from flask import Flask, make_response, jsonify, session, request, current_app, Blueprint
+from flask import Flask, abort, make_response, jsonify, session, request, current_app, Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from config import api, jwt, db, app
 from models import Product, User,Category, Tag, ViewingHistory, SearchQuery, Engagement,wishlist_table, Rating, Discount
@@ -14,11 +14,13 @@ def init_jwt(app):
 @product_bp.route('/products', methods=['GET'])
 def get_products():
     limit = request.args.get('limit',default=None,type=int)
+    category = request.args.get('category',default=None,type=str)
     if limit is None:
         products = [product.serialize() for product in Product.query.all()]
     elif limit is not None:
         products = [product.serialize() for product in Product.query.limit(limit).all()]
-    
+    elif category != None:
+        products = [product.serialize() for product in Product.query.filter(Product.category == category).all()]
     return jsonify(products), 200
 
 # Route to fetch products by category name
