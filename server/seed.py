@@ -66,7 +66,7 @@ def seed_db():
     db.session.commit()
 
     # Products API endpoint
-    fetch_url = 'https://dummyjson.com/products?limit=120'
+    fetch_url = 'https://dummyjson.com/products?limit=200'
     response = requests.get(fetch_url)
     if response.status_code == 200:
         products = response.json().get('products', [])
