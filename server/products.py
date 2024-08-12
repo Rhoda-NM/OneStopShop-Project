@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from config import api, jwt, db, app
 from models import Product, User,Category, Tag, ViewingHistory, SearchQuery, Engagement,wishlist_table, Rating, Discount
 from authenticate import allow
+from Search import search_products
 
 product_bp = Blueprint('product_bp', __name__, url_prefix='/api')
 
