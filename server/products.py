@@ -13,15 +13,22 @@ def init_jwt(app):
 # get products
 @product_bp.route('/products', methods=['GET'])
 def get_products():
-    limit = request.args.get('limit',default=None,type=int)
-    category = request.args.get('category',default=None,type=str)
-    if limit is None:
-        products = [product.serialize() for product in Product.query.all()]
-    elif limit is not None:
-        products = [product.serialize() for product in Product.query.limit(limit).all()]
-    elif category != None:
-        products = [product.serialize() for product in Product.query.filter(Product.category == category).all()]
-    return jsonify(products), 200
+    limit = request.args.get('limit', default=None, type=int)
+    
+    # Start building the query
+    query = Product.query \
+        .outerjoin(Rating, Product.id == Rating.product_id) \
+        .group_by(Product.id) \
+        .order_by(db.func.avg(Rating.rating).desc())
+    
+    # Apply limit if provided
+    if limit is not None:
+        query = query.limit(limit)
+    
+    products = query.all()
+    
+    return jsonify([product.serialize() for product in products]), 200
+
 
 # Route to fetch products by category name
 @product_bp.route('/products/category/<string:category_name>', methods=['GET'])
