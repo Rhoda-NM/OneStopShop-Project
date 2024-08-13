@@ -309,7 +309,7 @@ class Rating(db.Model, SerializerMixin):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now(), nullable=False)
 
     product = db.relationship('Product', backref='ratings')
     user = db.relationship('User', backref='ratings')
@@ -348,4 +348,5 @@ class Discount(db.Model, SerializerMixin):
             'start_date': self.start_date.isoformat(),
             'end_date': self.end_date.isoformat()
         }
+    
     
