@@ -25,20 +25,30 @@ def view_wishlist():
 @wishlist_bp.route('/wishlist', methods=['POST'])
 @jwt_required()
 def add_to_wishlist():
-    data = request.get_json()
-    user_id = get_jwt_identity()
-    product_id = data.get('product_id')
+    try:
+        data = request.get_json()
+        user_id = get_jwt_identity()
+        product_id = data.get('product_id')
+        print("User ID:", user_id, "Product ID:", product_id)
 
-    user = db.session.get(User, user_id) 
-    product = db.session.get(Product, product_id) 
+        user = db.session.get(User, user_id)
+        if not user:
+            return jsonify({"message": "User not found"}), 404
 
-    if product not in user.wishlists:
-        user.wishlists.append(product)
-        db.session.commit()
-        return jsonify({'message': 'Product added to wishlist'}), 201
-    else:
-        return jsonify({'message': 'Product already in wishlist'}),200
+        product = db.session.get(Product, product_id)
+        if not product:
+            return jsonify({"message": "Product not found"}), 404
 
+        if product not in user.wishlists:
+            user.wishlists.append(product)
+            db.session.commit()
+            return jsonify({'message': 'Product added to wishlist'}), 201
+        else:
+            return jsonify({'message': 'Product already in wishlist'}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 422 
+
+#remove from wishlist
 @wishlist_bp.route('/wishlist/<int:product_id>', methods=['DELETE'])
 @jwt_required()
 def remove_from_wishlist(product_id):
@@ -54,4 +64,14 @@ def remove_from_wishlist(product_id):
     else:
         return jsonify({'message': 'Product not in wishlist'}), 404 
 
-
+#wishlist recommendation
+@wishlist_bp.route('/wishlist/recommendations', methods=['GET'])
+@jwt_required()
+def recommend_products():
+    user = User.query.get(current_user.id)
+    wishlist_tags = [tag for product in user.wishlists for tag in product.tags]
+    
+    # Get products that share the same tags
+    recommended_products = Product.query.filter(Product.tags.any(wishlist_tags)).limit(10).all()
+    
+    return jsonify([product.serialize() for product in recommended_products])

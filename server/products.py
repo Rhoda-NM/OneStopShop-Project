@@ -1,8 +1,9 @@
-from flask import Flask, make_response, jsonify, session, request, current_app, Blueprint
+from flask import Flask, abort, make_response, jsonify, session, request, current_app, Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from config import api, jwt, db, app
-from models import Product, User, ViewingHistory, SearchQuery, Engagement,wishlist_table
+from models import Product, User,Category, Tag, ViewingHistory, SearchQuery, Engagement,wishlist_table, Rating, Discount
 from authenticate import allow
+from Search import search_products
 
 product_bp = Blueprint('product_bp', __name__, url_prefix='/api')
 
@@ -10,15 +11,48 @@ product_bp = Blueprint('product_bp', __name__, url_prefix='/api')
 def init_jwt(app):
     jwt.init_app(app)
 
-# Products
+# get products
 @product_bp.route('/products', methods=['GET'])
 def get_products():
-    products = [product.serialize() for product in Product.query.all()]
-    return jsonify(products), 200
+    limit = request.args.get('limit', default=None, type=int)
+    
+    # Start building the query
+    query = Product.query \
+        .outerjoin(Rating, Product.id == Rating.product_id) \
+        .group_by(Product.id) \
+        .order_by(db.func.avg(Rating.rating).desc())
+    
+    # Apply limit if provided
+    if limit is not None:
+        query = query.limit(limit)
+    
+    products = query.all()
+    
+    return jsonify([product.serialize() for product in products]), 200
 
+
+# Route to fetch products by category name
+@product_bp.route('/products/category/<string:category_name>', methods=['GET'])
+def get_products_by_category_name(category_name):
+    # Query the database to find the category by name
+    category = Category.query.filter_by(name=category_name).first()
+    
+    if not category:
+        abort(404, description="Category not found")
+    
+    # Fetch all products belonging to this category
+    products = Product.query.filter_by(category_id=category.id).all()
+    
+    # Serialize the list of products
+    serialized_products = [product.serialize() for product in products]
+    
+    return jsonify(serialized_products), 200
+
+
+#Add a product
 @product_bp.route('/products', methods=['POST'])
 @jwt_required()
-@allow('admin')
+@allow('admin', 'seller')
 def create_product():
     current_user_id = get_jwt_identity()
     data = request.get_json()
@@ -35,13 +69,26 @@ def create_product():
     db.session.commit()
     return jsonify(product.serialize()), 201
 
+# get a product
 @product_bp.route('/products/<int:product_id>', methods=['GET'])
 def get_product(product_id):
-    product = Product.query.filter_by(id=product_id).first()
+    product = db.session.get(Product, product_id)
     if not product:
-        return jsonify({"message": "Product not found"}), 404
-    return jsonify(product.serialize()), 200
+        return jsonify({'error': 'Product not found'}), 404
 
+    product_data = product.serialize()
+
+    # Fetch ratings
+    ratings = Rating.query.filter_by(product_id=product_id).all()
+    product_data['ratings'] = [rating.serialize() for rating in ratings]
+
+    # Fetch discounts
+    discounts = Discount.query.filter_by(product_id=product_id).all()
+    product_data['discounts'] = [discount.serialize() for discount in discounts]
+
+    return jsonify(product_data), 200
+
+# patch a product
 @product_bp.route('/products/<int:product_id>', methods=['PATCH'])
 @jwt_required()
 @allow('admin','seller')
@@ -67,6 +114,7 @@ def update_product(product_id):
     except Exception as e:
         return jsonify({"message": str(e)}), 400
 
+# delete a product
 @product_bp.route('/products/<int:product_id>', methods=['DELETE'])
 @jwt_required()
 @allow('admin','seller')
@@ -125,3 +173,106 @@ def get_recommended_products():
 
     return jsonify({'recommended_products': [product.serialize() for product in top_products]}), 200
 
+# products by seller
+@product_bp.route('/user_products', methods=['GET'])
+@jwt_required()
+def get_user_products():
+    current_user_id = get_jwt_identity()
+    products = Product.query.filter_by(user_id=current_user_id).all()
+    return jsonify([product.to_dict() for product in products]), 200
+
+
+# Ratings
+@product_bp.route('/ratings', methods=['GET'])
+def get_ratings():
+    ratings = [rating.serialize() for rating in Rating.query.all()]
+    return jsonify(ratings), 200
+
+@product_bp.route('/ratings/<int:id>',methods=['GET'])
+def get_rating(id):
+    ratings = [rating.serialize() for rating in Rating.query.filter(Rating.product_id == id).all()]
+    return jsonify(ratings), 200
+@product_bp.route('/ratings', methods=['POST'])
+def create_rating():
+    data = request.get_json()
+    new_rating = Rating(
+        product_id=data.get('product_id'),
+        user_id=data.get('user_id'),
+        rating=data.get('rating'),
+        comment=data.get('comment')
+    )
+    db.session.add(new_rating)
+    db.session.commit()
+    return jsonify(new_rating.serialize()), 201
+
+@product_bp.route('/ratings/<int:id>', methods=['DELETE'])
+def delete_rating(id):
+    rating = Rating.query.get_or_404(id)
+    db.session.delete(rating)
+    db.session.commit()
+    return jsonify({'message': 'Rating deleted successfully'}), 200
+
+@product_bp.route('/ratings/<int:id>', methods=['PATCH'])
+def update_rating(id):
+    data = request.get_json()
+    rating = Rating.query.get_or_404(id)
+    if 'rating' in data:
+        rating.rating = data['rating']
+    if 'comment' in data:
+        rating.comment = data['comment']
+    db.session.commit()
+    return jsonify(rating.serialize()), 200
+
+# Discounts
+@product_bp.route('/discounts', methods=['GET'])
+def get_discounts():
+    discounts = [discount.serialize() for discount in Discount.query.all()]
+    return jsonify(discounts), 200
+
+@product_bp.route('discounts/<int:id>',methods=['GET'])
+def get_discount(id):
+    discount =Discount.query.filter(Discount.product_id == id).first()
+    if not discount:
+        return jsonify({"message": "Discount not found"}), 404
+    return jsonify(discount.serialize()), 200
+
+
+@product_bp.route('/discounts', methods=['POST'])
+def create_discount():
+    data = request.get_json()
+    new_discount = Discount(
+        product_id=data.get('product_id'),
+        discount_percentage=data.get('discount_percentage'),
+        start_date=data.get('start_date'),
+        end_date=data.get('end_date')
+    )
+    db.session.add(new_discount)
+    db.session.commit()
+    return jsonify(new_discount.serialize()), 201
+
+@product_bp.route('/discounts/<int:id>', methods=['DELETE'])
+def delete_discount(id):
+    discount = Discount.query.get_or_404(id)
+    db.session.delete(discount)
+    db.session.commit()
+    return jsonify({'message': 'Discount deleted successfully'}), 200
+
+@product_bp.route('/discounts/<int:id>', methods=['PATCH'])
+def update_discount(id):
+    data = request.get_json()
+    discount = Discount.query.get_or_404(id)
+    if 'discount_percentage' in data:
+        discount.discount_percentage = data['discount_percentage']
+    if 'start_date' in data:
+        discount.start_date = data['start_date']
+    if 'end_date' in data:
+        discount.end_date = data['end_date']
+    db.session.commit()
+    return jsonify(discount.serialize()), 200
+
+@product_bp.route('/search_details', methods=['GET'])
+def search_product_details():
+    query = request.args.get('query')
+    product_data=[product.serialize() for product in Product.query.all()]
+    results = search_products(query,product_data)
+    return jsonify(results),200

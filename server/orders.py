@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from config import api, jwt, db, app
 
 # Add your model imports
-from models import Product, Order, OrderItem
+from models import Product, Order, OrderItem, User
 from authenticate import allow
 
 order_bp = Blueprint('order_bp',__name__, url_prefix='/api')
@@ -114,7 +114,41 @@ def complete_order(order_id):
 @jwt_required()
 def get_orders():
     current_user_id = get_jwt_identity()
-    orders = Order.query.filter_by(user_id=current_user_id, status='completed').all()
-    return jsonify([order.serialize() for order in orders])
+    user = db.session.get(User, current_user_id)
+    orders = user.get_completed_orders()
+    return jsonify(orders), 200
 
+# get all products by a specific seller
+@order_bp.route('/seller/<int:seller_id>/products', methods=['GET'])
+def get_products_by_seller(seller_id):
+    seller = User.query.get(seller_id)
+    if not seller:
+        return jsonify({"error": "Seller not found"}), 404
+
+    products = seller.products
+    products_with_sales = []
+
+    for product in products:
+        total_sales = sum(item.quantity * item.price for item in product.order_items)
+        total_quantity = sum(item.quantity for item in product.order_items)
+        product_data = product.serialize()
+        product_data['total_sales'] = total_sales
+        product_data['total_quantity'] = total_quantity
+        products_with_sales.append(product_data)
+
+    return jsonify(products_with_sales), 200
+
+@order_bp.route('/seller/<int:seller_id>/orders', methods=['GET'])
+def get_orders_by_seller(seller_id):
+    seller = User.query.get(seller_id)
+    if not seller:
+        return jsonify({"error": "Seller not found"}), 404
+
+    orders = []
+    for product in seller.products:
+        for order_item in product.order_items:
+            if order_item.order not in orders:
+                orders.append(order_item.order)
+
+    return jsonify([order.serialize() for order in orders]), 200
 
