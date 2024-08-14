@@ -1,5 +1,5 @@
 from config import db, app
-from models import User, Product, Order, OrderItem, ViewingHistory, SearchQuery, Engagement, Rating, Discount, Category, Tag, ProductImage, BillingDetail
+from models import User, Product, Order, OrderItem, ViewingHistory, SearchQuery, Engagement, Rating, Discount, Category, Tag, ProductImage, BillingDetail, wishlist_table
 from datetime import datetime, timedelta
 from app import create_app
 import requests
@@ -13,52 +13,62 @@ def seed_db():
     db.create_all()
 
     # Create some users
-    user1 = User(username='user1', email='user1@example.com', role='admin')
-    user1.set_password('adminpassword')
+    user1 = User(username='Rhoda', email='rhoda@gmail.com', role='admin')
+    user1.set_password('Rhoda@123')
     user2 = User(username='user2', email='user2@example.com', role='seller')
     user2.set_password('adminpassword')
     user3 = User(username='admin', email='admin@example.com', role='seller')
     user3.set_password('adminpassword')
+    user4 = User(username = 'Jack', email='jack@gmail.com', role='seller')
+    user4.set_password('jack@123')
+    customer1 = User(username='Jesse', email='jesse@gmail.com', role='user')
+    customer1.set_password('jesse@123')
+    customer2 = User(username='Abby', email='abby@gmail.com', role='user')
+    customer2.set_password('abby@123')
+    customer3 = User(username='Lily', email='lily@gmail.com', role='user')
+    customer3.set_password('lily@123')
+
+    
 
     # Add users to session
-    db.session.add_all([user1, user2, user3])
+    db.session.add_all([user1, user2, user3, user4, customer1, customer2, customer3])
     db.session.commit()
 
     # Create BillingDetails for each user
     billing_detail1 = BillingDetail(
-        user_id=user1.id,
-        full_name="User One",
+        user_id=customer1.id,
+        full_name="Jesse William ",
         address_line_1="123 Main St",
         city="City A",
         state="State A",
         postal_code="12345",
         country="Country A",
         phone_number="111-222-3333",
-        email=user1.email
+        email=customer1.email
     )
 
     billing_detail2 = BillingDetail(
-        user_id=user2.id,
-        full_name="User Two",
+        user_id=customer2.id,
+        full_name="Abby Joy",
         address_line_1="456 Market St",
         city="City B",
         state="State B",
         postal_code="67890",
         country="Country B",
         phone_number="444-555-6666",
-        email=user2.email
+        email=customer2.email
     )
 
     billing_detail3 = BillingDetail(
-        user_id=user3.id,
-        full_name="Admin User",
+        user_id=customer3.id,
+        full_name="Lily Ann",
         address_line_1="789 Broadway",
         city="City C",
         state="State C",
         postal_code="54321",
         country="Country C",
         phone_number="777-888-9999",
-        email=user3.email
+        email=customer3.email
     )
 
     # Add billing details to session
@@ -70,7 +80,8 @@ def seed_db():
     response = requests.get(fetch_url)
     if response.status_code == 200:
         products = response.json().get('products', [])
-        users = User.query.all()
+        sellers = User.query.filter_by(role='seller').all()
+        users = User.query.filter_by(role='user').all()
 
         # Add products to db
         for product_data in products:
@@ -94,7 +105,7 @@ def seed_db():
                     category_id=category.id,
                     image_url=product_data['thumbnail'],
                     sku=product_data['sku'],  # Main image or thumbnail
-                    user_id=random.choice(users).id
+                    user_id=random.choice(sellers).id
                 )
                 db.session.add(product)
                 db.session.flush()
@@ -192,6 +203,14 @@ def seed_db():
                 engaged_at=datetime.now() - timedelta(days=random.randint(1, 30))
             )
             db.session.add(engagement)
+
+        # Seed Wishlist data
+        for _ in range(25):  # Create 50 random wishlist entries
+            user = random.choice(users)
+            product = random.choice(Product.query.all())
+            db.session.execute(wishlist_table.insert().values(user_id=user.id, product_id=product.id))
+
+        db.session.commit()
 
         db.session.commit()
 

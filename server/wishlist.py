@@ -72,6 +72,6 @@ def recommend_products():
     wishlist_tags = [tag for product in user.wishlists for tag in product.tags]
     
     # Get products that share the same tags
-    recommended_products = Product.query.filter(Product.tags.any(wishlist_tags)).limit(10).all()
+    recommended_products = Product.query.filter(Product.tags.any(wishlist_tags)).limit(6).all()
     
     return jsonify([product.serialize() for product in recommended_products])

@@ -14,21 +14,13 @@ def init_jwt(app):
 # get products
 @product_bp.route('/products', methods=['GET'])
 def get_products():
-    limit = request.args.get('limit', default=None, type=int)
+    limit = request.args.get('limit',default=None,type=int)
+    if limit is None:
+        products = [product.serialize() for product in Product.query.all()]
+    elif limit is not None:
+        products = [product.serialize() for product in Product.query.limit(limit).all()]
     
-    # Start building the query
-    query = Product.query \
-        .outerjoin(Rating, Product.id == Rating.product_id) \
-        .group_by(Product.id) \
-        .order_by(db.func.avg(Rating.rating).desc())
-    
-    # Apply limit if provided
-    if limit is not None:
-        query = query.limit(limit)
-    
-    products = query.all()
-    
-    return jsonify([product.serialize() for product in products]), 200
+    return jsonify(products), 200
 
 
 # Route to fetch products by category name
@@ -137,41 +129,36 @@ def delete_product(product_id):
 @product_bp.route('/recommended_products', methods=['GET'])
 @jwt_required()
 def get_recommended_products():
-    current_user_id = get_jwt_identity()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    if not user:
+        return jsonify({"error": "User not found"}), 404
 
-    # Fetch user data
-    user_views = ViewingHistory.query.filter_by(user_id=current_user_id).order_by(ViewingHistory.viewed_at.desc()).all()
-    user_searches = SearchQuery.query.filter_by(user_id=current_user_id).order_by(SearchQuery.searched_at.desc()).all()
-    user_engagements = Engagement.query.filter_by(user_id=current_user_id).order_by(Engagement.engaged_at.desc()).all()
+    # Get recent search queries, views, and engagements
+    search_queries = SearchQuery.query.filter_by(user_id=user_id).order_by(SearchQuery.searched_at.desc()).limit(10).all()
+    viewing_history = ViewingHistory.query.filter_by(user_id=user_id).order_by(ViewingHistory.viewed_at.desc()).limit(10).all()
+    engagements = Engagement.query.filter_by(user_id=user_id).order_by(Engagement.engaged_at.desc()).limit(10).all()
 
-    # Initialize a dictionary to score products
-    product_scores = {}
+    # Gather product IDs from these interactions
+    product_ids = set()
+    for sq in search_queries:
+        products = Product.query.filter(Product.name.ilike(f"%{sq.search_query}%")).all()
+        product_ids.update([p.id for p in products])
 
-    # Add scores for recently viewed products
-    for view in user_views:
-        if view.product_id not in product_scores:
-            product_scores[view.product_id] = 0
-        product_scores[view.product_id] += 1  # Add a basic score, can be weighted based on recency
+    product_ids.update([vh.product_id for vh in viewing_history])
+    product_ids.update([e.product_id for e in engagements])
 
-    # Add scores for products related to recent search queries
-    for search in user_searches:
-        related_products = Product.query.filter(Product.name.ilike(f"%{search.query}%")).all()
-        for product in related_products:
-            if product.id not in product_scores:
-                product_scores[product.id] = 0
-            product_scores[product.id] += 2  # Higher weight for search relevance
+    # Fetch the products based on these IDs
+    recommended_products = Product.query.filter(Product.id.in_(list(product_ids))).limit(4).all()
 
-    # Add scores for highly engaged products
-    for engagement in user_engagements:
-        if engagement.product_id not in product_scores:
-            product_scores[engagement.product_id] = 0
-        product_scores[engagement.product_id] += engagement.watch_time / 60  # Score based on watch time in minutes
+    # If not enough products, fetch some random ones to fill the gap
+    if len(recommended_products) < 4:
+        additional_products = Product.query.filter(Product.id.notin_(product_ids)).order_by(db.func.random()).limit(4 - len(recommended_products)).all()
+        recommended_products.extend(additional_products)
 
-    # Sort products by score in descending order and get top N products
-    top_product_ids = sorted(product_scores, key=product_scores.get, reverse=True)
-    top_products = Product.query.filter(Product.id.in_(top_product_ids)).all()
+    return jsonify([product.serialize() for product in recommended_products])
 
-    return jsonify({'recommended_products': [product.serialize() for product in top_products]}), 200
 
 # products by seller
 @product_bp.route('/user_products', methods=['GET'])
