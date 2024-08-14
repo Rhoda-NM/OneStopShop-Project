@@ -10,6 +10,13 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from flask_jwt_extended import JWTManager # type: ignore
 
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+database_url = os.getenv('DATABASE_URL')
+
 # Local imports
 
 # Instantiate app, set attributes

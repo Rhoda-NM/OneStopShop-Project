@@ -1,0 +1,2 @@
+FLASK_CONFIG=production
+DATABASE_URL = postgresql://onestop_user:fmb0gfqHCfDWYB7snQWVhzCbXsLXu7AX@dpg-cquig688fa8c73fmdlqg-a/onestop
