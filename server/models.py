@@ -166,6 +166,11 @@ class Category(db.Model):
             'name': self.name,
             'tags': [tag.serialize() for tag in self.tags],  # serialize tags relationship
         }
+    def serialize_limited(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+        }
     
     def __repr__(self):
         return f"<Category(name={self.name})>"

@@ -30,6 +30,10 @@ def get_products():
     
     return jsonify([product.serialize() for product in products]), 200
 
+@product_bp.route('/products/categories', methods=['GET'])
+def get_categories():
+    categories = Category.query.all()
+    return jsonify([categories.serialize_limited() for categories in categories]),200
 
 # Route to fetch products by category name
 @product_bp.route('/products/category/<string:category_name>', methods=['GET'])
@@ -260,8 +264,38 @@ def update_discount(id):
     return jsonify(discount.serialize()), 200
 
 @product_bp.route('/search_details', methods=['GET'])
+
 def search_product_details():
     query = request.args.get('query')
     product_data=[product.serialize() for product in Product.query.all()]
     results = search_products(query,product_data)
+    #if results:
+        #if user_id:
+         #   search_entry = SearchQuery(user_id=user_id, search_query=query)
+          #  db.session.add(search_entry)
+           # db.session.commit()
     return jsonify(results),200
+
+@product_bp.route('/top_discounted_rated_products', methods=['GET'])
+def get_top_discounted_rated_products():
+    limit = request.args.get('limit', default=None, type=int)
+
+    # Start building the query
+    query = Product.query \
+        .outerjoin(Rating, Product.id == Rating.product_id) \
+        .outerjoin(Discount, Product.id == Discount.product_id) \
+        .group_by(Product.id) \
+        .order_by(
+            ((Discount.discount_percentage / 100) * Product.price).desc(),  # Highest discount
+            db.func.avg(Rating.rating).desc()  # Highest rating
+        )
+    
+    # Apply limit if provided
+    if limit is not None:
+        query = query.limit(limit)
+    
+    products = query.all()
+    
+    return jsonify([product.serialize() for product in products]), 200
+
+

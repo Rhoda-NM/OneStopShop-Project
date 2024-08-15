@@ -78,8 +78,8 @@ class Register(Resource):
 
             session['user_id'] = new_user.id
             access_token = create_access_token(identity = new_user.id)
-
-            return {'access_token': access_token}
+            refresh_token = create_refresh_token(identity=new_user.id)
+            return {'access_token': access_token,"refresh_token": refresh_token}
 
 
         return {'error': '422 Unprocessable Entity'}, 422
@@ -97,7 +97,7 @@ class Login(Resource):
             # login
             access_token = create_access_token(identity=user.id)
             refresh_token = create_refresh_token(identity=user.id)
-            return {'user': user.serialize(), "access_token": access_token}, 200
+            return {'user': user.serialize(), "access_token": access_token,"refresh_token":refresh_token}, 200
 
 
     @jwt_required(refresh=True)
@@ -149,6 +149,13 @@ def delete_user(id):
     db.session.commit()
     return '', 204
 
+# Token refreshing
+@authenticate_bp.route('/refresh_token', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh_token():
+    current_user_id = get_jwt_identity()
+    new_access_token = create_access_token(identity=current_user_id)
+    return jsonify(access_token=new_access_token), 200
 # routes
 auth_api.add_resource(Register, '/register')
 auth_api.add_resource(Login, '/login')

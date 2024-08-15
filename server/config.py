@@ -9,6 +9,7 @@ from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from flask_jwt_extended import JWTManager # type: ignore
+from datetime import timedelta
 
 # Local imports
 
@@ -24,11 +25,15 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'You will never walk alone')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your_jwt_secret_key')
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Longer-lived refresh token
+
 
 class DevelopmentConfig(Config):
     """Development configuration with settings for development."""
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DEV_DATABASE_URL', 'sqlite:///app.db')
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Longer-lived refresh token
+
 
 class TestingConfig(Config):
     """Testing configuration with settings for testing."""
@@ -36,10 +41,12 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URL', 'sqlite:///test_database.db')
     WTF_CSRF_ENABLED = False
     DEBUG = True
+    
 
 class ProductionConfig(Config):
     """Production configuration with settings for production."""
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///prod_database.db')
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Longer-lived refresh token
 
 # Dictionary to map environment names to configuration classes
 config_by_name = {
