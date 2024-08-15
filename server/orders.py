@@ -18,7 +18,7 @@ def init_jwt(app):
 @jwt_required()
 def view_cart():
     user_id = get_jwt_identity()
-    order = Order.query.filter_by(user_id=user_id, status='cart').first()
+    order = Order.query.filter_by(user_id=user_id,status ='pending').first()
     if not order:
         return jsonify({'message': 'No items in the cart'}), 200
     return jsonify(order.serialize()), 200
@@ -84,12 +84,12 @@ def add_to_cart():
 @jwt_required()
 def checkout():
     user_id = get_jwt_identity()
-    order = Order.query.filter_by(user_id=user_id, status='cart').first()
+    order = Order.query.filter_by(user_id=user_id, status='pending').first()
     if not order:
         return jsonify({'error': 'No active cart found'}), 400
 
     # Update the order status to 'pending'
-    order.status = 'pending'
+    order.status = 'shipped'
     db.session.commit()
     
     return jsonify(order.serialize()), 200
