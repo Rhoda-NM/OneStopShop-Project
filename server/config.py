@@ -26,6 +26,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your_jwt_secret_key')
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Longer-lived refresh token
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)  # For a 24-hour access token
 
 
 class DevelopmentConfig(Config):
@@ -33,6 +34,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DEV_DATABASE_URL', 'sqlite:///app.db')
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Longer-lived refresh token
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)  # For a 24-hour access token
 
 
 class TestingConfig(Config):
@@ -47,6 +49,7 @@ class ProductionConfig(Config):
     """Production configuration with settings for production."""
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///prod_database.db')
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Longer-lived refresh token
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)  # For a 24-hour access token
 
 # Dictionary to map environment names to configuration classes
 config_by_name = {
