@@ -1,4 +1,4 @@
-![alt text](src/components/assets/onestoplogo.svg)
+![alt text](server/assets/onestoplogo.svg)
 
 # OneStopShop
 
