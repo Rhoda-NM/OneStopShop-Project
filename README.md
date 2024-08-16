@@ -47,28 +47,29 @@ Project Sructure
 one_stop_shop/
 │
 ├── server/
-│   ├── __init__.py
-│   ├── models.py
+│   ├── __pycache__
+│   ├── assets
+│   ├── instance
+│   ├── migrations
 │   ├── app.py
-|   ├── tests/
-│       ├── __init__.py
-│       ├── test_wishlist.py
-│   ├── __init__.py
-│   ├── product_routes.py
-│   ├── user_routes.py
-│   ├── order_routes.py
-│   ├── wishlist_routes.py
-│   ├── search_routes.py
-│   └── extensions.py
+|   ├── authenticate.py
+│   ├── config.py
+│   ├── models.py
+│   ├── orders.py
+│   ├── products.py
+│   ├── Search.py
+│   ├── seed.py
+│   ├── test_app.py
+│   ├── test_authenticate.py
+│   ├── test_file.py
+│   ├── test_orders.py
+│   ├── test_products.py
+│   ├── test_search.py
+│   └── wishlist.py
 │
-├── config.py
-├── app.py
-├── manage.py
-├── run.py
-├── tests/
-│   ├── __init__.py
-│   ├── test_wishlist.py
-└── requirements.txt
+├── Pipfile
+├── Pipfile.lock
+└── README.md
 
 ```
 
