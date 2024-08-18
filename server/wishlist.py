@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from config import api, jwt, db, app
 
 # Add your model imports
-from models import Product, User
+from models import Product, User, Tag
 from authenticate import allow
 
 wishlist_bp = Blueprint('wishlist_bp',__name__, url_prefix='/api')
@@ -64,14 +64,17 @@ def remove_from_wishlist(product_id):
     else:
         return jsonify({'message': 'Product not in wishlist'}), 404 
 
-#wishlist recommendation
 @wishlist_bp.route('/wishlist/recommendations', methods=['GET'])
 @jwt_required()
 def recommend_products():
     user = User.query.get(current_user.id)
-    wishlist_tags = [tag for product in user.wishlists for tag in product.tags]
-    
-    # Get products that share the same tags
-    recommended_products = Product.query.filter(Product.tags.any(wishlist_tags)).limit(10).all()
+    wishlist_product_ids = [product.id for product in user.wishlists]
+    wishlist_tags = {tag.id for product in user.wishlists for tag in product.tags}
+
+    # Get products that share the same tags and are not in the user's wishlist
+    recommended_products = Product.query.filter(
+        ~Product.id.in_(wishlist_product_ids),
+        Product.tags.any(Tag.id.in_(wishlist_tags))
+    ).limit(10).all()
     
     return jsonify([product.serialize() for product in recommended_products])

@@ -93,6 +93,41 @@ def checkout():
     db.session.commit()
     
     return jsonify(order.serialize()), 200
+@order_bp.route('/cart', methods=['PUT'])
+@jwt_required()
+def update_cart():
+    data = request.get_json()
+    user_id = get_jwt_identity()
+
+    # Check if the user already has an active cart
+    order = Order.query.filter_by(user_id=user_id, status='pending').first()
+    if not order:
+        return jsonify({'error': 'No active cart found'}), 400
+
+    # Update items in the cart
+    for item_data in data['order_items']:
+        product = Product.query.get(item_data['product_id'])
+        if product:
+            order_item = OrderItem.query.filter_by(order_id=order.id, product_id=product.id).first()
+            if order_item:
+                # Update the quantity and adjust the total price
+                old_quantity = order_item.quantity
+                order_item.quantity = item_data['quantity']
+                order.total_price += (order_item.quantity - old_quantity) * product.price
+            else:
+                # Add a new item to the cart
+                order_item = OrderItem(
+                    order_id=order.id,
+                    product_id=product.id,
+                    quantity=item_data['quantity'],
+                    price=product.price
+                )
+                db.session.add(order_item)
+                order.total_price += product.price * item_data['quantity']
+
+    db.session.commit()
+
+    return jsonify(order.serialize()), 200
 
 @order_bp.route('/complete_order/<int:order_id>', methods=['POST'])
 @jwt_required()

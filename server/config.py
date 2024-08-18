@@ -9,7 +9,7 @@ from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from flask_jwt_extended import JWTManager # type: ignore
-
+from datetime import timedelta
 # Local imports
 
 # Instantiate app, set attributes
@@ -40,6 +40,8 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     """Production configuration with settings for production."""
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///prod_database.db')
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
+    app.config['ACCESS_TOKEN_EXPIRES'] = timedelta(days=30)
 
 # Dictionary to map environment names to configuration classes
 config_by_name = {

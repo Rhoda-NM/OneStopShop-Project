@@ -17,6 +17,8 @@ flask-bcrypt = "*"
 flask-jwt-extended = "*"
 requests = "*"
 honcho = "*"
+fuzzywuzzy = "*"
+levenshtein = "*"
 
 [dev-packages]
 

@@ -62,7 +62,8 @@ class User(db.Model, SerializerMixin):
         return {
             'id': self.id,
             'username': self.username,
-            'email': self.email
+            'email': self.email,
+            'role': self.role
             #'wishlists': [wishlist.serialize() for wishlist in self.wishlists]
         }
 class BillingDetail(db.Model, SerializerMixin):
@@ -156,6 +157,11 @@ class Category(db.Model):
             'id': self.id,
             'name': self.name,
             'tags': [tag.serialize() for tag in self.tags],  # serialize tags relationship
+        }
+    def serialize_limited(self):
+        return {
+            'id': self.id,
+            'name': self.name,
         }
     
     def __repr__(self):
