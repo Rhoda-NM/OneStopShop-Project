@@ -169,4 +169,4 @@ def refresh_token():
 # routes
 auth_api.add_resource(Register, '/register')
 auth_api.add_resource(Login, '/login')
-auth_api.add_resource(RefreshToken, '/refresh-token')
+

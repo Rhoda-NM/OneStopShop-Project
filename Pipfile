@@ -19,6 +19,7 @@ requests = "*"
 honcho = "*"
 fuzzywuzzy = "*"
 levenshtein = "*"
+flask-mail = "*"
 
 [dev-packages]
 

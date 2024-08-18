@@ -9,6 +9,7 @@ from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from flask_jwt_extended import JWTManager # type: ignore
+from flask_mail import Mail
 from datetime import timedelta
 # Local imports
 
@@ -23,7 +24,15 @@ class Config:
     """Base configuration with default settings."""
     SECRET_KEY = os.getenv('SECRET_KEY', 'You will never walk alone')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your_jwt_secret_key')
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your_jwt_secret_key') 
+
+    MAIL_SERVER = 'smtp.gmail.com'
+    MAIL_PORT = 465
+    MAIL_USERNAME = os.getenv('MAIL_USERNAME', 'www.brianonduso08@gmail.com')
+    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', 'Onchwari08')
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = True
+    MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'www.brianonduso08@gmail.com')
 
 class DevelopmentConfig(Config):
     """Development configuration with settings for development."""
