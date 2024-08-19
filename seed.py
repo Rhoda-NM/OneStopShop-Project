@@ -157,7 +157,7 @@ def seed_db():
                     discount_percentage=random.uniform(5, 25),
                     start_date=datetime.now() - timedelta(days=random.randint(1, 10)),
                     end_date=datetime.now() + timedelta(days=random.randint(5, 15))
-                )Category
+                )
                 db.session.add(discount)
 
         db.session.commit()
