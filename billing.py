@@ -1,9 +1,13 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app import db
+from config import db,app,jwt
 from models import BillingDetail
 
 billing_bp = Blueprint('billing', __name__)
+# Initialize JWT
+def init_jwt(app):
+    jwt.init_app(app)
+
 
 @billing_bp.route('/billing_details', methods=['POST'])
 @jwt_required()

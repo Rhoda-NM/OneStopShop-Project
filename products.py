@@ -166,15 +166,6 @@ def get_recommended_products():
 
     return jsonify({'recommended_products': [product.serialize() for product in top_products]}), 200
 
-# products by seller
-@product_bp.route('/user_products', methods=['GET'])
-@jwt_required()
-def get_user_products():
-    current_user_id = get_jwt_identity()
-    products = Product.query.filter_by(user_id=current_user_id).all()
-    return jsonify([product.to_dict() for product in products]), 200
-
-
 # Ratings
 @product_bp.route('/ratings', methods=['GET'])
 def get_ratings():
@@ -298,4 +289,9 @@ def get_top_discounted_rated_products():
     
     return jsonify([product.serialize() for product in products]), 200
 
-
+@product_bp.route('/seller_products', methods=['GET'])
+@jwt_required()
+def get_user_products():
+    current_user_id = get_jwt_identity()
+    products = Product.query.filter_by(user_id=current_user_id).all()
+    return jsonify([product.serialize() for product in products]), 200

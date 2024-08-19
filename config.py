@@ -9,8 +9,8 @@ from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from flask_jwt_extended import JWTManager # type: ignore
+from flask_mail import Mail
 from datetime import timedelta
-
 # Local imports
 
 # Instantiate app, set attributes
@@ -24,18 +24,20 @@ class Config:
     """Base configuration with default settings."""
     SECRET_KEY = os.getenv('SECRET_KEY', 'You will never walk alone')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your_jwt_secret_key')
-    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Longer-lived refresh token
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)  # For a 24-hour access token
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your_jwt_secret_key') 
 
+    MAIL_SERVER = 'smtp.gmail.com'
+    MAIL_PORT = 465
+    MAIL_USERNAME = os.getenv('MAIL_USERNAME', 'www.brianonduso08@gmail.com')
+    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', 'Onchwari08')
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = True
+    MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'www.brianonduso08@gmail.com')
 
 class DevelopmentConfig(Config):
     """Development configuration with settings for development."""
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DEV_DATABASE_URL', 'sqlite:///app.db')
-    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Longer-lived refresh token
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)  # For a 24-hour access token
-
 
 class TestingConfig(Config):
     """Testing configuration with settings for testing."""
@@ -43,13 +45,12 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URL', 'sqlite:///test_database.db')
     WTF_CSRF_ENABLED = False
     DEBUG = True
-    
 
 class ProductionConfig(Config):
     """Production configuration with settings for production."""
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///prod_database.db')
-    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Longer-lived refresh token
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)  # For a 24-hour access token
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
+    app.config['ACCESS_TOKEN_EXPIRES'] = timedelta(days=30)
 
 # Dictionary to map environment names to configuration classes
 config_by_name = {
@@ -73,3 +74,4 @@ bcrypt = Bcrypt()
 jwt = JWTManager()
 api = Api()
 cors = CORS()
+mail = Mail()

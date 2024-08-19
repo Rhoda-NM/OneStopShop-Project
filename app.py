@@ -25,6 +25,8 @@ def create_app(config_name=None):
     from orders import order_bp
     from wishlist import wishlist_bp    
     from search import search_bp
+    from contact import contact_bp
+    from checkout import checkout_bp
     from billing import billing_bp
 
     app.register_blueprint(authenticate_bp)
@@ -32,6 +34,8 @@ def create_app(config_name=None):
     app.register_blueprint(order_bp)
     app.register_blueprint(wishlist_bp)
     app.register_blueprint(search_bp)
+    #app.register_blueprint(contact_bp)
+    app.register_blueprint(checkout_bp)
     app.register_blueprint(billing_bp)
 
     return app

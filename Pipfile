@@ -18,6 +18,7 @@ flask-jwt-extended = "*"
 requests = "*"
 honcho = "*"
 fuzzywuzzy = "*"
+flask-mail = "*"
 
 [dev-packages]
 
