@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 
-#run database migrations
-flask db upgrade
+# Install Pipenv if it's not already installed
+pip install pipenv
 
-#seed database
-python seed.py
+# Install dependencies from Pipfile
+pipenv install --dev
+
+# Run database migrations
+pipenv run flask db upgrade
+
+# Seed database
+pipenv run python seed.py
