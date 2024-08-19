@@ -62,7 +62,8 @@ class User(db.Model, SerializerMixin):
         return {
             'id': self.id,
             'username': self.username,
-            'email': self.email
+            'email': self.email,
+            'role': self.role,
             #'wishlists': [wishlist.serialize() for wishlist in self.wishlists]
         }
 class BillingDetail(db.Model, SerializerMixin):
