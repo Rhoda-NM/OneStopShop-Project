@@ -2,7 +2,7 @@ services:
   - type: web
     name: One-Stop-Shop
     env: python
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: "./render-build.sh"
     startCommand: "gunicorn 'app:create_app(\"production\")'"
     autoDeploy: true
     envVars:
