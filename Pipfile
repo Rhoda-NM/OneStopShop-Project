@@ -19,6 +19,7 @@ requests = "*"
 honcho = "*"
 fuzzywuzzy = "*"
 flask-mail = "*"
+gunicorn = "*"
 
 [dev-packages]
 
